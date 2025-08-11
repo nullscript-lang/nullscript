@@ -1,0 +1,79 @@
+# Source files (not needed in npm package)
+src/
+*.ts
+!*.d.ts
+
+# Development files
+tsconfig.json
+.gitignore
+.npmignore
+.github/
+.vscode/
+.idea/
+
+# Development dependencies and scripts
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+bun.lock
+
+# Build tools and configs
+webpack.config.js
+rollup.config.js
+vite.config.js
+jest.config.js
+.eslintrc.*
+.prettierrc.*
+.babelrc.*
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+examples/
+
+# Documentation source
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Development scripts and tools
+scripts/
+tools/
+dev/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env*
+!.env.example
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# TypeScript build info
+*.tsbuildinfo
