@@ -4,7 +4,10 @@ import { Command } from "commander";
 import path from "node:path";
 import { nullScriptKeywords } from "./keywords.js";
 import {
+  NullScriptTranspileError,
   buildDirectory,
+  formatNullScriptError,
+  parseTypeScriptError,
   transpileFile,
   transpileToJs,
   type TranspileOptions,
@@ -84,7 +87,11 @@ program
         console.log(chalk.green(`✅ Transpiled ${inputPath} → ${outputPath}`));
       }
     } catch (err) {
-      console.error(chalk.red("❌ Transpilation failed:"), err);
+      if (err instanceof NullScriptTranspileError) {
+        console.error(chalk.red(formatNullScriptError(err)));
+      } else {
+        console.error(chalk.red("❌ Transpilation failed:"), err);
+      }
       process.exitCode = 1;
     }
   });
@@ -112,7 +119,11 @@ program
         fs.unlink(tempJs).catch(() => {}),
       );
     } catch (err) {
-      console.error(chalk.red("❌ Runtime error:"), err);
+      if (err instanceof NullScriptTranspileError) {
+        console.error(chalk.red(formatNullScriptError(err)));
+      } else {
+        console.error(chalk.red("❌ Runtime error:"), err);
+      }
       process.exitCode = 1;
     }
   });
@@ -138,7 +149,8 @@ program
         console.log(chalk.green("✅ Type checking passed!"));
       } catch (error) {
         console.error(chalk.red("❌ Type checking failed:"));
-        console.error(error);
+        const customError = parseTypeScriptError(String(error));
+        console.error(chalk.red(formatNullScriptError(customError)));
         process.exitCode = 1;
       }
 
