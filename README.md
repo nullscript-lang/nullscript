@@ -265,13 +265,6 @@ MIT License - Feel free to fork, modify, and have fun!
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## 📚 Documentation
-
-- [Language Reference](docs/language-reference.md)
-- [CLI Reference](docs/cli-reference.md)
-- [Examples](examples/)
-- [Migration Guide](docs/migration.md)
-
 ---
 
 *"NullScript: Because programming should be fun, even when it's serious."* 🎭

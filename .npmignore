@@ -37,6 +37,8 @@ __tests__/
 *.spec.js
 *.spec.ts
 examples/
+examples-output/
+examples-output-js/
 
 # Documentation source
 docs/

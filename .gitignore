@@ -19,6 +19,8 @@ build/
 
 # Examples
 examples/
+examples-output/
+examples-output-js/
 
 # Environment variables
 .env
