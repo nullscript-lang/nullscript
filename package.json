@@ -1,6 +1,6 @@
 {
   "name": "nullscript",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NullScript: TypeScript with attitude - a fun parody language that compiles to identical TypeScript/JavaScript",
   "type": "module",
   "bin": {
@@ -39,9 +39,7 @@
     "typescript": "^5.9.2"
   },
   "files": [
-    "dist",
-    "README.md",
-    "examples"
+    "dist"
   ],
   "engines": {
     "node": ">=18.0.0"
