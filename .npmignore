@@ -1,10 +1,9 @@
-# Source files (not needed in npm package)
+# Rust source files (not needed in npm package)
 src/
-*.ts
-!*.d.ts
+Cargo.toml
+Cargo.lock
 
 # Development files
-tsconfig.json
 .gitignore
 .npmignore
 .github/
@@ -28,7 +27,7 @@ jest.config.js
 .prettierrc.*
 .babelrc.*
 
-# Test files
+# Test files and examples
 test/
 tests/
 __tests__/
@@ -39,6 +38,7 @@ __tests__/
 examples/
 examples-output/
 examples-output-js/
+test-output/
 
 # Documentation source
 docs/
@@ -77,5 +77,6 @@ npm-debug.log*
 coverage/
 .nyc_output/
 
-# TypeScript build info
-*.tsbuildinfo
+# Rust build artifacts
+target/
+**/*.rs.bk
