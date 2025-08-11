@@ -6,7 +6,7 @@ import {
   getAllKeywords,
   getFunctionKeywords,
   getMultiWordKeywords,
-} from "./keywords";
+} from "./keywords.js";
 
 const execAsync = promisify(exec);
 
@@ -23,7 +23,6 @@ export function transpileNullScript(
 ): string {
   let output = source;
 
-  // Handle function declarations specially
   for (const [alias, tsKeyword] of Object.entries(getFunctionKeywords())) {
     if (alias.includes("async")) {
       output = output.replace(
@@ -32,23 +31,53 @@ export function transpileNullScript(
       );
     } else {
       output = output.replace(
-        new RegExp(`\\b${alias}\\s+([a-zA-Z_$][\\w$]*)`, "g"),
-        `${tsKeyword} $1`,
+        new RegExp(
+          `\\b${alias}\\s+([a-zA-Z_$][\\w$]*)\\s*(?:<[^>]*>)?\\s*\\(`,
+          "g",
+        ),
+        (match, functionName) => {
+          const lines = output.split("\n");
+          const currentLineIndex =
+            output.substring(0, output.indexOf(match)).split("\n").length - 1;
+          const currentLine = lines[currentLineIndex];
+          const indent = currentLine.match(/^(\s*)/)?.[1] || "";
+
+          const restOfMatch = match.substring(
+            alias.length + 1 + functionName.length,
+          );
+
+          if (indent.length > 0) {
+            return `${functionName}${restOfMatch}`;
+          } else {
+            return `${tsKeyword} ${functionName}${restOfMatch}`;
+          }
+        },
+      );
+
+      output = output.replace(
+        new RegExp(`\\b${alias}\\s*\\(`, "g"),
+        `${tsKeyword}(`,
       );
     }
   }
 
-  // Handle other keywords with better context awareness
   for (const [alias, tsKeyword] of Object.entries(getAllKeywords())) {
-    // Skip function-related aliases as they're handled above
     if (alias === "feels" || alias === "feels async") continue;
 
-    // Use word boundaries but be more careful about context
-    const regex = new RegExp(`\\b${alias}\\b`, "g");
-    output = output.replace(regex, tsKeyword);
+    if (alias === "remove") {
+      output = output.replace(
+        new RegExp(
+          `\\bremove\\s+([a-zA-Z_$][\\w$]*(?:\\.[a-zA-Z_$][\\w$]*)*(?:\\[[^\\]]+\\])?)\\b`,
+          "g",
+        ),
+        `delete $1`,
+      );
+    } else {
+      const regex = new RegExp(`\\b${alias}\\b`, "g");
+      output = output.replace(regex, tsKeyword);
+    }
   }
 
-  // Handle special multi-word aliases
   for (const [alias, tsKeyword] of Object.entries(getMultiWordKeywords())) {
     output = output.replace(
       new RegExp(`\\b${alias}\\s+`, "g"),
@@ -78,45 +107,47 @@ export async function transpileToJs(
   jsPath: string,
   options: TranspileOptions = {},
 ): Promise<void> {
-  // First transpile .ns to .ts
   const tsPath = nsPath.replace(/\.ns$/, ".ts");
   await transpileFile(nsPath, tsPath, { ...options, outputFormat: "ts" });
 
+  const tempDir = path.dirname(tsPath);
+  const tsConfigPath = path.join(tempDir, "tsconfig.json");
+  const tsConfig = {
+    compilerOptions: {
+      target: "ES2022",
+      module: "ES2022",
+      moduleResolution: "node",
+      outDir: path.dirname(jsPath),
+      rootDir: tempDir,
+      esModuleInterop: true,
+      allowSyntheticDefaultImports: true,
+      skipLibCheck: true,
+      noEmit: false,
+    },
+    include: [path.basename(tsPath)],
+  };
+
+  let configCreated = false;
+
   try {
-    // Create a minimal tsconfig for compilation
-    const tempDir = path.dirname(tsPath);
-    const tsConfigPath = path.join(tempDir, "tsconfig.json");
-    const tsConfig = {
-      compilerOptions: {
-        target: "ES2022",
-        module: "ES2022",
-        moduleResolution: "node",
-        outDir: path.dirname(jsPath),
-        rootDir: tempDir,
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        skipLibCheck: true,
-        noEmit: false,
-      },
-      include: [path.basename(tsPath)],
-    };
-
     await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
+    configCreated = true;
 
-    // Use TypeScript compiler to compile .ts to .js
     const tscCommand = options.skipTypeCheck
       ? `npx tsc --noCheck --project "${tsConfigPath}"`
       : `npx tsc --project "${tsConfigPath}"`;
 
     await execAsync(tscCommand);
 
-    // Clean up intermediate files if we only want .js
     if (options.outputFormat === "js") {
-      await fs.unlink(tsPath).catch(() => {}); // ignore errors
-      await fs.unlink(tsConfigPath).catch(() => {}); // ignore errors
+      await fs.unlink(tsPath).catch(() => {});
     }
   } catch (error) {
     throw new Error(`TypeScript compilation failed: ${error}`);
+  } finally {
+    if (configCreated) {
+      await fs.unlink(tsConfigPath).catch(() => {});
+    }
   }
 }
 

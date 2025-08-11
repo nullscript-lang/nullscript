@@ -17,6 +17,7 @@ export const nullScriptKeywords = {
     title: "Error Handling",
     keywords: {
       oops: "try", // Attempt code that might throw an error
+      oop: "try", // Short alias for try
       mybad: "catch", // Handle an error if it happens
       anyway: "finally", // Always run after try/catch
     },
