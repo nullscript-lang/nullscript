@@ -156,7 +156,6 @@ impl NullScriptKeywords {
         }
     }
 
-    /// Get all keywords as a flat HashMap
     pub fn get_all_keywords(&self) -> HashMap<String, String> {
         let mut all_keywords = HashMap::new();
 
@@ -167,17 +166,14 @@ impl NullScriptKeywords {
         all_keywords
     }
 
-    /// Get multi-word keywords
     pub fn get_multi_word_keywords(&self) -> &HashMap<String, String> {
         &self.multi_word.keywords
     }
 
-    /// Get function declaration keywords
     pub fn get_function_keywords(&self) -> &HashMap<String, String> {
         &self.function_declarations.keywords
     }
 
-    /// Get all categories as a vector
     pub fn all_categories(&self) -> Vec<&KeywordCategory> {
         vec![
             &self.control_flow,
@@ -195,7 +191,6 @@ impl NullScriptKeywords {
         ]
     }
 
-    /// Get category by name
     pub fn get_category(&self, name: &str) -> Option<&KeywordCategory> {
         match name {
             "control-flow" | "control_flow" => Some(&self.control_flow),
@@ -214,7 +209,6 @@ impl NullScriptKeywords {
         }
     }
 
-    /// Get all category names
     pub fn get_category_names(&self) -> Vec<&str> {
         vec![
             "control-flow",

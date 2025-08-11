@@ -210,7 +210,7 @@ pub fn get_error_mappings() -> std::collections::HashMap<&'static str, ErrorMapp
 
     mappings.insert("Unexpected token", ErrorMapping {
         message: "Syntax error in NullScript code. Check for missing keywords or incorrect syntax.".to_string(),
-        suggestion: "Make sure you're using NullScript keywords correctly. Run 'nullc keywords' to see all available keywords.".to_string(),
+                    suggestion: "Make sure you're using NullScript keywords correctly. Run 'nsc keywords' to see all available keywords.".to_string(),
     });
 
     mappings.insert("Declaration or statement expected", ErrorMapping {
@@ -225,7 +225,7 @@ pub fn get_error_mappings() -> std::collections::HashMap<&'static str, ErrorMapp
 
     mappings.insert("Unexpected keyword or identifier", ErrorMapping {
         message: "Invalid NullScript syntax. You're using an undefined keyword or incorrect syntax.".to_string(),
-        suggestion: "Check that you're using valid NullScript keywords. Run 'nullc keywords' to see all available options.".to_string(),
+                    suggestion: "Check that you're using valid NullScript keywords. Run 'nsc keywords' to see all available options.".to_string(),
     });
 
     mappings
@@ -237,8 +237,6 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
     let mut column: Option<u32> = None;
     let mut error_message = error_output.to_string();
 
-    // Extract line and column information from TypeScript error
-    // Handle format like "file.ts:12:1 - error TS1434:"
     if let Some(location_match) = regex::Regex::new(r"(\w+\.ts):(\d+):(\d+)\s*-\s*error|:(\d+):(\d+)")
         .ok()
         .and_then(|re| re.captures(error_output))
@@ -251,10 +249,8 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
         }
     }
 
-    // Find the core error message(s) - handle multiple TypeScript errors
     let error_lines: Vec<&str> = lines.iter().filter(|line| line.contains("error TS")).cloned().collect();
     if !error_lines.is_empty() {
-        // Take the first meaningful error
         let first_error = error_lines[0];
         if let Some(captures) = regex::Regex::new(r"error TS\d+: (.+)")
             .ok()
@@ -266,9 +262,7 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
         }
     }
 
-    // If no TypeScript errors found, look for other common patterns
     if error_lines.is_empty() {
-        // Look for compilation failure patterns
         if let Some(compilation_error) = lines.iter().find(|line| {
             line.contains("Cannot find name") ||
             line.contains("Unexpected token") ||
@@ -278,7 +272,6 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
         }
     }
 
-    // Check for known error patterns
     let error_mappings = get_error_mappings();
     for (pattern, mapping) in error_mappings.iter() {
         if error_message.contains(pattern) {
@@ -290,7 +283,6 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
         }
     }
 
-    // Fallback: clean up the TypeScript error message
     let clean_message = error_message
         .replace(regex::Regex::new(r"error TS\d+:\s*").unwrap().as_str(), "")
         .split('\n')
@@ -305,7 +297,7 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
         .to_string();
 
     let fallback_message = format!(
-        "Transpilation error: {}\n💡 This might be due to incorrect NullScript syntax. Run 'nullc keywords' to see available keywords.",
+        "Transpilation error: {}\n💡 This might be due to incorrect NullScript syntax. Run 'nsc keywords' to see available keywords.",
         clean_message
     );
 

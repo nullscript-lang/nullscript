@@ -6,8 +6,6 @@ Cargo.lock
 # Examples and test files
 examples/
 examples-output/
-examples-output-js/
-test-output/
 
 # Environment variables
 .env

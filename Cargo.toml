@@ -1,6 +1,6 @@
 [package]
 name = "nullscript"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2021"
 description = "NullScript: TypeScript with attitude - a fun parody language that compiles to identical TypeScript/JavaScript"
 authors = ["NullScript Language Team"]
@@ -9,7 +9,7 @@ repository = "https://github.com/nullscript-lang/nullscript"
 homepage = "https://github.com/nullscript-lang/nullscript#readme"
 
 [[bin]]
-name = "nullc"
+name = "nsc"
 path = "src/main.rs"
 
 [profile.release]

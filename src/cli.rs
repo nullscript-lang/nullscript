@@ -9,18 +9,18 @@ use tokio::fs;
 
 #[derive(Parser)]
 #[command(
-    name = "nullc",
-    version = "1.0.1",
+    name = "nsc",
+    version = "2.0.2",
     about = "NullScript transpiler - TypeScript with attitude",
     long_about = None,
     after_help = "Examples:
-  nullc build src/                    # Transpile all .ns files in src/ to TypeScript
-  nullc build src/ --js               # Transpile to JavaScript
-  nullc run hello.ns                  # Run a NullScript file
-  nullc check src/                    # Type-check NullScript files
-  nullc keywords                       # Show all available keywords
+  nsc build src/                    # Transpile all .ns files in src/ to TypeScript
+  nsc build src/ --js               # Transpile to JavaScript
+  nsc run hello.ns                  # Run a NullScript file
+  nsc check src/                    # Type-check NullScript files
+  nsc keywords                      # Show all available keywords
 
-Learn more at: https://github.com/kiron0/nullscript"
+Learn more at: https://github.com/nullscript-lang/nullscript"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -29,57 +29,44 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Transpile NullScript files to TypeScript or JavaScript
     Build(BuildArgs),
-    /// Run a NullScript file directly
     Run(RunArgs),
-    /// Type-check NullScript files using TypeScript
     Check(CheckArgs),
-    /// Show all available NullScript keywords
     Keywords(KeywordsArgs),
 }
 
 #[derive(Args)]
 pub struct BuildArgs {
-    /// Directory or file to transpile (.ns)
     pub path: PathBuf,
 
-    /// Output directory
     #[arg(short = 'o', long = "outDir", default_value = "dist")]
     pub out_dir: PathBuf,
 
-    /// Compile directly to JavaScript
     #[arg(long = "js")]
     pub js: bool,
 
-    /// Transpile to TypeScript (default)
     #[arg(long = "ts")]
     pub ts: bool,
 
-    /// Skip TypeScript type checking
     #[arg(long = "skip-type-check")]
     pub skip_type_check: bool,
 }
 
 #[derive(Args)]
 pub struct RunArgs {
-    /// NullScript file to run (.ns)
     pub file: PathBuf,
 
-    /// Skip TypeScript type checking
     #[arg(long = "skip-type-check")]
     pub skip_type_check: bool,
 }
 
 #[derive(Args)]
 pub struct CheckArgs {
-    /// File or directory to type-check
     pub path: PathBuf,
 }
 
 #[derive(Args)]
 pub struct KeywordsArgs {
-    /// Show aliases for specific category
     #[arg(short = 'c', long = "category")]
     pub category: Option<String>,
 }
@@ -186,14 +173,12 @@ impl CliHandler {
             .transpile_to_js(&args.file, &temp_js, &transpile_options)
             .await?;
 
-        // Run the compiled JavaScript
         let output = if cfg!(target_os = "windows") {
             Command::new("node").arg(&temp_js).output()
         } else {
             Command::new("node").arg(&temp_js).output()
         };
 
-        // Clean up temp file
         let _ = fs::remove_file(&temp_js).await;
 
         match output {
@@ -224,12 +209,10 @@ impl CliHandler {
             skip_type_check: false,
         };
 
-        // Transpile to .ts first
         self.transpiler
             .build_directory(&args.path, &temp_dir, &transpile_options)
             .await?;
 
-        // Run tsc --noEmit
         let output = if cfg!(target_os = "windows") {
             Command::new("tsc")
                 .args(&["--noEmit", "--project", &temp_dir.display().to_string()])
@@ -240,7 +223,6 @@ impl CliHandler {
                 .output()
         };
 
-        // Clean up temp directory
         let _ = fs::remove_dir_all(&temp_dir).await;
 
         match output {
@@ -312,7 +294,7 @@ impl CliHandler {
 
             println!(
                 "{}",
-                "\n💡 Tip: Use 'nullc keywords --category <name>' to see specific categories"
+                "\n💡 Tip: Use 'nsc keywords --category <name>' to see specific categories"
                     .bright_black()
             );
             println!(

@@ -1,11 +1,13 @@
 {
   "name": "nullscript",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "NullScript: TypeScript with attitude - a fun parody language that compiles to identical TypeScript/JavaScript",
   "bin": {
-    "nullc": "target/release/nullc"
+    "nsc": "target/release/nsc",
+    "nullscript": "target/release/nsc"
   },
   "scripts": {
+    "start": "./target/release/nsc",
     "build": "source $HOME/.cargo/env && cargo build --release",
     "prepublishOnly": "npm run build"
   },
@@ -19,7 +21,7 @@
   "author": "NullScript Language Team",
   "license": "MIT",
   "files": [
-    "target/release/nullc"
+    "target/release/nsc"
   ],
   "repository": {
     "type": "git",

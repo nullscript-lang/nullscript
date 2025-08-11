@@ -44,7 +44,6 @@ impl NullScriptTranspiler {
         }
     }
 
-    /// Validate NullScript syntax before transpiling
     pub fn validate_syntax(&self, source: &str, file_path: Option<&Path>) -> Result<(), NullScriptError> {
         let lines: Vec<&str> = source.split('\n').collect();
 
@@ -52,12 +51,10 @@ impl NullScriptTranspiler {
             let line = line.trim();
             let line_number = i as u32 + 1;
 
-            // Skip empty lines and comments
             if line.is_empty() || line.starts_with("//") || line.starts_with("/*") {
                 continue;
             }
 
-            // Check for invalid keywords (using standard TS/JS instead of NullScript)
             let invalid_patterns = vec![
                 (r"\b(function\s+\w+\s*\()", "using 'function' instead of 'feels'"),
                 (r"\b(const\s+\w+)", "using 'const' instead of 'definitely'"),
@@ -82,7 +79,7 @@ impl NullScriptTranspiler {
                 let regex = Regex::new(pattern)?;
                 if regex.is_match(line) {
                     let message = format!(
-                        "Invalid syntax on line {}: You're using standard TypeScript/JavaScript syntax instead of NullScript keywords.\n💡 Run 'nullc keywords' to see the correct NullScript syntax.",
+                        "Invalid syntax on line {}: You're using standard TypeScript/JavaScript syntax instead of NullScript keywords.\n💡 Run 'nsc keywords' to see the correct NullScript syntax.",
                         line_number
                     );
                     return Err(NullScriptError::Syntax(
@@ -96,7 +93,6 @@ impl NullScriptTranspiler {
                 }
             }
 
-            // Check for unknown keywords
             let unknown_keyword_regex = Regex::new(r"^(\w+)\s+\w+\s*=")?;
             if let Some(captures) = unknown_keyword_regex.captures(line) {
                 if let Some(keyword_match) = captures.get(1) {
@@ -106,7 +102,7 @@ impl NullScriptTranspiler {
 
                     if !all_keywords.contains_key(keyword) && !valid_keywords.contains(&keyword) {
                         let message = format!(
-                            "Unknown keyword '{}' on line {}.\n💡 Use valid NullScript keywords. Run 'nullc keywords' to see all available options.",
+                            "Unknown keyword '{}' on line {}.\n💡 Use valid NullScript keywords. Run 'nsc keywords' to see all available options.",
                             keyword, line_number
                         );
                         return Err(NullScriptError::Syntax(
@@ -125,17 +121,14 @@ impl NullScriptTranspiler {
         Ok(())
     }
 
-    /// Transpile NullScript source code to TypeScript/JavaScript
     pub fn transpile(&self, source: &str, _options: &TranspileOptions) -> Result<String, NullScriptError> {
         let mut output = source.to_string();
 
-        // Handle function declarations first
         for (alias, ts_keyword) in self.keywords.get_function_keywords() {
             if alias.contains("async") {
                 let regex = Regex::new(&format!(r"\b{}\s+([a-zA-Z_$][\w$]*)", regex::escape(alias)))?;
                 output = regex.replace_all(&output, format!("{} $1", ts_keyword)).to_string();
             } else {
-                // Handle function declarations more carefully
                 let regex = Regex::new(&format!(
                     r"\b{}\s+([a-zA-Z_$][\w$]*)\s*(?:<[^>]*>)?\s*\(",
                     regex::escape(alias)
@@ -154,10 +147,8 @@ impl NullScriptTranspiler {
                             .collect::<String>();
 
                         if !indent.is_empty() {
-                            // Method declaration (indented)
                             caps[0].replace(alias, "").trim_start().to_string()
                         } else {
-                            // Top-level function declaration
                             format!("{} {}", ts_keyword, caps[0].replace(alias, "").trim_start())
                         }
                     } else {
@@ -165,21 +156,18 @@ impl NullScriptTranspiler {
                     }
                 }).to_string();
 
-                // Handle anonymous functions
                 let anon_regex = Regex::new(&format!(r"\b{}\s*\(", regex::escape(alias)))?;
                 output = anon_regex.replace_all(&output, format!("{}(", ts_keyword)).to_string();
             }
         }
 
-        // Handle regular keywords (excluding function keywords)
         let all_keywords = self.keywords.get_all_keywords();
         for (alias, ts_keyword) in all_keywords {
             if alias == "feels" || alias == "feels async" {
-                continue; // Already handled above
+                continue;
             }
 
             if alias == "remove" {
-                // Special handling for delete operator
                 let regex = Regex::new(r"\bremove\s+([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*(?:\[[^\]]+\])?)\b")?;
                 output = regex.replace_all(&output, "delete $1").to_string();
             } else {
@@ -188,7 +176,6 @@ impl NullScriptTranspiler {
             }
         }
 
-        // Handle multi-word keywords
         for (alias, ts_keyword) in self.keywords.get_multi_word_keywords() {
             let regex = Regex::new(&format!(r"\b{}\s+", regex::escape(alias)))?;
             output = regex.replace_all(&output, format!("{} ", ts_keyword)).to_string();
@@ -197,7 +184,6 @@ impl NullScriptTranspiler {
         Ok(output)
     }
 
-    /// Transpile a single file
     pub async fn transpile_file(
         &self,
         input_path: &Path,
@@ -206,12 +192,10 @@ impl NullScriptTranspiler {
     ) -> Result<String, NullScriptError> {
         let source = fs::read_to_string(input_path).await?;
 
-        // Validate syntax before transpiling
         self.validate_syntax(&source, Some(input_path))?;
 
         let transpiled = self.transpile(&source, options)?;
 
-        // Create output directory if it doesn't exist
         if let Some(parent) = output_path.parent() {
             fs::create_dir_all(parent).await?;
         }
@@ -221,14 +205,12 @@ impl NullScriptTranspiler {
         Ok(transpiled)
     }
 
-        /// Transpile to JavaScript via TypeScript
     pub async fn transpile_to_js(
         &self,
         ns_path: &Path,
         js_path: &Path,
         options: &TranspileOptions,
     ) -> Result<(), NullScriptError> {
-        // Create a temporary directory for compilation
         let temp_dir = std::env::temp_dir().join("nullscript-temp");
         fs::create_dir_all(&temp_dir).await?;
 
@@ -239,7 +221,6 @@ impl NullScriptTranspiler {
 
         let temp_ts_path = temp_dir.join(&ts_filename);
 
-        // First transpile to TypeScript in temp directory
         let ts_options = TranspileOptions {
             output_format: OutputFormat::TypeScript,
             ..options.clone()
@@ -248,7 +229,6 @@ impl NullScriptTranspiler {
         match self.transpile_file(ns_path, &temp_ts_path, &ts_options).await {
             Ok(_) => {},
             Err(e) => {
-                // Clean up temp directory
                 let _ = fs::remove_dir_all(&temp_dir).await;
                 return Err(e);
             }
@@ -275,10 +255,8 @@ impl NullScriptTranspiler {
             "include": [ts_filename]
         });
 
-        // Create temporary tsconfig.json
         fs::write(&tsconfig_path, serde_json::to_string_pretty(&tsconfig)?).await?;
 
-        // Run TypeScript compiler in the temp directory
         let tsc_args = if options.skip_type_check {
             vec!["--noCheck", "--project", "tsconfig.json"]
         } else {
@@ -313,10 +291,8 @@ impl NullScriptTranspiler {
 
                     Err(parse_typescript_error(&combined_error, Some(ns_path.to_path_buf())))
                 } else {
-                    // Move the generated JS file to the target location
                     match fs::metadata(&temp_js_path).await {
                         Ok(_) => {
-                            // Create output directory if needed
                             if let Some(parent) = js_path.parent() {
                                 fs::create_dir_all(parent).await?;
                             }
@@ -337,13 +313,11 @@ impl NullScriptTranspiler {
             Err(e) => Err(NullScriptError::Io(e)),
         };
 
-        // Clean up temporary directory
         let _ = fs::remove_dir_all(&temp_dir).await;
 
         result
     }
 
-    /// Build an entire directory of .ns files
     pub async fn build_directory(
         &self,
         input_dir: &Path,
