@@ -26,13 +26,35 @@ NullScript uses a **centralized version management system** where you only need 
 
 ## Usage
 
-### Check Current Version
+### NPM Scripts (Recommended)
+
+For convenience, you can use npm scripts to manage versions:
+
 ```bash
+# Check current version
+npm run version:check
+
+# Update to new version
+npm run version:update 2.0.4
+```
+
+### Direct Script Usage
+
+You can also use the scripts directly:
+```bash
+# Using npm script
+npm run version:check
+
+# Using direct script
 ./scripts/version.sh
 ```
 
 ### Update to New Version
 ```bash
+# Using npm script
+npm run version:update 2.0.4
+
+# Using direct script
 ./scripts/version.sh 2.0.4
 ```
 
@@ -40,15 +62,19 @@ NullScript uses a **centralized version management system** where you only need 
 
 ```bash
 # Check current version and where it's used
+npm run version:check
 ./scripts/version.sh
 
 # Update to patch version
+npm run version:update 2.0.4
 ./scripts/version.sh 2.0.4
 
 # Update to minor version
+npm run version:update 2.1.0
 ./scripts/version.sh 2.1.0
 
 # Update to major version
+npm run version:update 3.0.0
 ./scripts/version.sh 3.0.0
 ```
 

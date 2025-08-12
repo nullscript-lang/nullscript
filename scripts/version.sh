@@ -83,34 +83,34 @@ show_current_version() {
 # Main script logic
 main() {
     local current_version=$(get_current_version)
-    
+
     if [ $# -eq 0 ]; then
         # No arguments provided, show current version
         show_current_version
         exit 0
     fi
-    
+
     local new_version=$1
-    
+
     print_status "Current version: $current_version"
     print_status "New version: $new_version"
-    
+
     if [ "$current_version" = "$new_version" ]; then
         print_warning "Version is already $new_version"
         exit 0
     fi
-    
+
     # Validate version format
     validate_version "$new_version"
-    
+
     # Update versions
     update_cargo_version "$new_version"
     update_package_version "$new_version"
     update_readme_version "$new_version"
-    
+
     print_status "Version updated successfully to $new_version"
     print_status "Run 'cargo build' to rebuild with new version"
-    
+
     # Show what changed
     echo ""
     echo -e "${BLUE}Changes made:${NC}"

@@ -9,7 +9,9 @@
   "scripts": {
     "start": "./target/release/nsc",
     "build": "source $HOME/.cargo/env && cargo build --release",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "version:check": "./scripts/version.sh",
+    "version:update": "./scripts/npm-version.sh"
   },
   "keywords": [
     "typescript",
