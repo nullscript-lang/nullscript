@@ -1,6 +1,6 @@
 {
   "name": "nullscript",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "NullScript: TypeScript with attitude - a fun parody language that compiles to identical TypeScript/JavaScript",
   "bin": {
     "nsc": "target/release/nsc",
