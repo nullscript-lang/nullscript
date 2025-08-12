@@ -1,31 +1,11 @@
-use crate::errors::*;
-use crate::keywords::NullScriptKeywords;
+use crate::core::{NullScriptError, NullScriptKeywords, NullScriptSyntaxError, NullScriptTranspileError, parse_typescript_error};
+use crate::core::types::{Location, TranspileOptions, OutputFormat, WithLocation};
+use crate::utils::commands::CommandUtils;
+use crate::utils::regex::RegexUtils;
 use regex::Regex;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use tokio::fs;
 use walkdir::WalkDir;
-
-#[derive(Debug, Clone)]
-pub struct TranspileOptions {
-    pub output_format: OutputFormat,
-    pub skip_type_check: bool,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum OutputFormat {
-    TypeScript,
-    JavaScript,
-}
-
-impl Default for TranspileOptions {
-    fn default() -> Self {
-        Self {
-            output_format: OutputFormat::TypeScript,
-            skip_type_check: false,
-        }
-    }
-}
 
 pub struct NullScriptTranspiler {
     keywords: NullScriptKeywords,
@@ -82,37 +62,38 @@ impl NullScriptTranspiler {
                         "Invalid syntax on line {}: You're using standard TypeScript/JavaScript syntax instead of NullScript keywords.\n💡 Run 'nsc keywords' to see the correct NullScript syntax.",
                         line_number
                     );
+                    let location = Location::new(
+                        file_path.map(|p| p.to_path_buf()),
+                        Some(line_number),
+                        None,
+                    );
                     return Err(NullScriptError::Syntax(
-                        NullScriptSyntaxError::with_location(
-                            message,
-                            file_path.map(|p| p.to_path_buf()),
-                            Some(line_number),
-                            None,
-                        )
+                        NullScriptSyntaxError::with_location(message, location)
                     ));
                 }
             }
 
-            let unknown_keyword_regex = Regex::new(r"^(\w+)\s+\w+\s*=")?;
-            if let Some(captures) = unknown_keyword_regex.captures(line) {
-                if let Some(keyword_match) = captures.get(1) {
-                    let keyword = keyword_match.as_str();
-                    let all_keywords = self.keywords.get_all_keywords();
-                    let valid_keywords = ["export", "import", "from", "as"];
+            if RegexUtils::matches(r"^(\w+)\s+\w+\s*=", line) {
+                if let Some(captures) = Regex::new(r"^(\w+)\s+\w+\s*=").ok().and_then(|re| re.captures(line)) {
+                    if let Some(keyword_match) = captures.get(1) {
+                        let keyword = keyword_match.as_str();
+                        let all_keywords = self.keywords.get_all_keywords();
+                        let valid_keywords = ["export", "import", "from", "as"];
 
-                    if !all_keywords.contains_key(keyword) && !valid_keywords.contains(&keyword) {
-                        let message = format!(
-                            "Unknown keyword '{}' on line {}.\n💡 Use valid NullScript keywords. Run 'nsc keywords' to see all available options.",
-                            keyword, line_number
-                        );
-                        return Err(NullScriptError::Syntax(
-                            NullScriptSyntaxError::with_location(
-                                message,
+                        if !all_keywords.contains_key(keyword) && !valid_keywords.contains(&keyword) {
+                            let message = format!(
+                                "Unknown keyword '{}' on line {}.\n💡 Use valid NullScript keywords. Run 'nsc keywords' to see all available options.",
+                                keyword, line_number
+                            );
+                            let location = Location::new(
                                 file_path.map(|p| p.to_path_buf()),
                                 Some(line_number),
                                 None,
-                            )
-                        ));
+                            );
+                            return Err(NullScriptError::Syntax(
+                                NullScriptSyntaxError::with_location(message, location)
+                            ));
+                        }
                     }
                 }
             }
@@ -134,7 +115,7 @@ impl NullScriptTranspiler {
                     regex::escape(alias)
                 ))?;
 
-                                output = regex.replace_all(&output, |caps: &regex::Captures| {
+                output = regex.replace_all(&output, |caps: &regex::Captures| {
                     let _function_name = &caps[1];
                     let lines: Vec<&str> = output.split('\n').collect();
                     let match_pos = caps.get(0).unwrap().start();
@@ -263,17 +244,7 @@ impl NullScriptTranspiler {
             vec!["--project", "tsconfig.json"]
         };
 
-        let tsc_output = if cfg!(target_os = "windows") {
-            Command::new("tsc")
-                .args(&tsc_args)
-                .current_dir(&temp_dir)
-                .output()
-        } else {
-            Command::new("tsc")
-                .args(&tsc_args)
-                .current_dir(&temp_dir)
-                .output()
-        };
+        let tsc_output = CommandUtils::execute_tsc_in_dir(&tsc_args, &temp_dir);
 
         let result = match tsc_output {
             Ok(output) => {
@@ -300,11 +271,10 @@ impl NullScriptTranspiler {
                             Ok(())
                         }
                         Err(_) => {
+                            let location = Location::new(Some(ns_path.to_path_buf()), None, None);
                             Err(NullScriptError::Transpile(NullScriptTranspileError::with_location(
                                 "JavaScript file was not generated by TypeScript compiler".to_string(),
-                                Some(ns_path.to_path_buf()),
-                                None,
-                                None,
+                                location,
                             )))
                         }
                     }

@@ -1,7 +1,7 @@
 mod cli;
-mod errors;
-mod keywords;
-mod transpiler;
+mod core;
+mod compiler;
+mod utils;
 
 use cli::run;
 use std::env;
@@ -18,7 +18,12 @@ async fn main() {
     };
 
     if is_nullscript_command {
-        println!("🎭 NullScript Transpiler");
+        if args.len() > 1 && (args[1] == "-v" || args[1] == "--version") {
+            println!("nullscript v{}", env!("CARGO_PKG_VERSION"));
+            std::process::exit(0);
+        }
+
+        println!("🎭 NullScript Transpiler v{}", env!("CARGO_PKG_VERSION"));
         println!("==================================================");
         println!("🚀 To transpile NullScript code, use the 'nsc' command.");
         println!();

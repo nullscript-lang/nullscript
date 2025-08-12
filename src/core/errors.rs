@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use thiserror::Error;
+use crate::core::types::{Location, WithLocation};
 
 #[derive(Error, Debug)]
 pub enum NullScriptError {
@@ -26,86 +27,54 @@ pub enum NullScriptError {
 #[error("{message}")]
 pub struct NullScriptTranspileError {
     pub message: String,
-    pub file_path: Option<PathBuf>,
-    pub line: Option<u32>,
-    pub column: Option<u32>,
+    pub location: Location,
 }
 
 #[derive(Error, Debug)]
 #[error("{message}")]
 pub struct NullScriptSyntaxError {
     pub message: String,
-    pub file_path: Option<PathBuf>,
-    pub line: Option<u32>,
-    pub column: Option<u32>,
+    pub location: Location,
 }
 
 #[derive(Error, Debug)]
 #[error("{message}")]
 pub struct NullScriptTypeError {
     pub message: String,
-    pub file_path: Option<PathBuf>,
-    pub line: Option<u32>,
-    pub column: Option<u32>,
+    pub location: Location,
+}
+
+impl WithLocation for NullScriptTranspileError {
+    fn with_location(message: String, location: Location) -> Self {
+        Self { message, location }
+    }
+}
+
+impl WithLocation for NullScriptSyntaxError {
+    fn with_location(message: String, location: Location) -> Self {
+        Self { message, location }
+    }
+}
+
+impl WithLocation for NullScriptTypeError {
+    fn with_location(message: String, location: Location) -> Self {
+        Self { message, location }
+    }
 }
 
 impl NullScriptTranspileError {
-    pub fn with_location(message: String, file_path: Option<PathBuf>, line: Option<u32>, column: Option<u32>) -> Self {
-        Self {
-            message,
-            file_path,
-            line,
-            column,
-        }
-    }
-
     pub fn format_error(&self) -> String {
         let mut output = format!("❌ NullScriptTranspileError");
-
-        if let Some(file_path) = &self.file_path {
-            if let Some(file_name) = file_path.file_name() {
-                output.push_str(&format!(" in {}", file_name.to_string_lossy()));
-            }
-        }
-
-        if let Some(line) = self.line {
-            output.push_str(&format!(":{}", line));
-            if let Some(column) = self.column {
-                output.push_str(&format!(":{}", column));
-            }
-        }
-
+        output.push_str(&self.location.format());
         output.push_str(&format!("\n\n{}", self.message));
         output
     }
 }
 
 impl NullScriptSyntaxError {
-    pub fn with_location(message: String, file_path: Option<PathBuf>, line: Option<u32>, column: Option<u32>) -> Self {
-        Self {
-            message,
-            file_path,
-            line,
-            column,
-        }
-    }
-
     pub fn format_error(&self) -> String {
         let mut output = format!("❌ NullScriptSyntaxError");
-
-        if let Some(file_path) = &self.file_path {
-            if let Some(file_name) = file_path.file_name() {
-                output.push_str(&format!(" in {}", file_name.to_string_lossy()));
-            }
-        }
-
-        if let Some(line) = self.line {
-            output.push_str(&format!(":{}", line));
-            if let Some(column) = self.column {
-                output.push_str(&format!(":{}", column));
-            }
-        }
-
+        output.push_str(&self.location.format());
         output.push_str(&format!("\n\n{}", self.message));
         output
     }
@@ -114,31 +83,17 @@ impl NullScriptSyntaxError {
 impl NullScriptTypeError {
     pub fn format_error(&self) -> String {
         let mut output = format!("❌ NullScriptTypeError");
-
-        if let Some(file_path) = &self.file_path {
-            if let Some(file_name) = file_path.file_name() {
-                output.push_str(&format!(" in {}", file_name.to_string_lossy()));
-            }
-        }
-
-        if let Some(line) = self.line {
-            output.push_str(&format!(":{}", line));
-            if let Some(column) = self.column {
-                output.push_str(&format!(":{}", column));
-            }
-        }
-
+        output.push_str(&self.location.format());
         output.push_str(&format!("\n\n{}", self.message));
         output
     }
 }
 
+#[derive(Debug)]
 pub struct ErrorMapping {
     pub message: String,
     pub suggestion: String,
 }
-
-
 
 pub fn get_error_mappings() -> std::collections::HashMap<&'static str, ErrorMapping> {
     let mut mappings = std::collections::HashMap::new();
@@ -210,7 +165,7 @@ pub fn get_error_mappings() -> std::collections::HashMap<&'static str, ErrorMapp
 
     mappings.insert("Unexpected token", ErrorMapping {
         message: "Syntax error in NullScript code. Check for missing keywords or incorrect syntax.".to_string(),
-                    suggestion: "Make sure you're using NullScript keywords correctly. Run 'nsc keywords' to see all available keywords.".to_string(),
+        suggestion: "Make sure you're using NullScript keywords correctly. Run 'nsc keywords' to see all available keywords.".to_string(),
     });
 
     mappings.insert("Declaration or statement expected", ErrorMapping {
@@ -225,44 +180,23 @@ pub fn get_error_mappings() -> std::collections::HashMap<&'static str, ErrorMapp
 
     mappings.insert("Unexpected keyword or identifier", ErrorMapping {
         message: "Invalid NullScript syntax. You're using an undefined keyword or incorrect syntax.".to_string(),
-                    suggestion: "Check that you're using valid NullScript keywords. Run 'nsc keywords' to see all available options.".to_string(),
+        suggestion: "Check that you're using valid NullScript keywords. Run 'nsc keywords' to see all available options.".to_string(),
     });
 
     mappings
 }
 
 pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) -> NullScriptError {
+    use crate::utils::regex::RegexUtils;
+    use crate::utils::strings::StringUtils;
+
     let lines: Vec<&str> = error_output.split('\n').collect();
-    let mut line: Option<u32> = None;
-    let mut column: Option<u32> = None;
+    let (line, column) = RegexUtils::extract_location(error_output);
     let mut error_message = error_output.to_string();
 
-    if let Some(location_match) = regex::Regex::new(r"(\w+\.ts):(\d+):(\d+)\s*-\s*error|:(\d+):(\d+)")
-        .ok()
-        .and_then(|re| re.captures(error_output))
-    {
-        if let Some(line_str) = location_match.get(2).or_else(|| location_match.get(4)) {
-            line = line_str.as_str().parse().ok();
-        }
-        if let Some(col_str) = location_match.get(3).or_else(|| location_match.get(5)) {
-            column = col_str.as_str().parse().ok();
-        }
-    }
-
-    let error_lines: Vec<&str> = lines.iter().filter(|line| line.contains("error TS")).cloned().collect();
-    if !error_lines.is_empty() {
-        let first_error = error_lines[0];
-        if let Some(captures) = regex::Regex::new(r"error TS\d+: (.+)")
-            .ok()
-            .and_then(|re| re.captures(first_error))
-        {
-            if let Some(matched) = captures.get(1) {
-                error_message = matched.as_str().to_string();
-            }
-        }
-    }
-
-    if error_lines.is_empty() {
+    if let Some(ts_error) = RegexUtils::extract_ts_error(error_output) {
+        error_message = ts_error;
+    } else {
         if let Some(compilation_error) = lines.iter().find(|line| {
             line.contains("Cannot find name") ||
             line.contains("Unexpected token") ||
@@ -276,33 +210,22 @@ pub fn parse_typescript_error(error_output: &str, file_path: Option<PathBuf>) ->
     for (pattern, mapping) in error_mappings.iter() {
         if error_message.contains(pattern) {
             let custom_message = format!("{}\n💡 {}", mapping.message, mapping.suggestion);
-
+            let location = Location::new(file_path, line, column);
             return NullScriptError::Syntax(
-                NullScriptSyntaxError::with_location(custom_message, file_path, line, column)
+                NullScriptSyntaxError::with_location(custom_message, location)
             );
         }
     }
 
-    let clean_message = error_message
-        .replace(regex::Regex::new(r"error TS\d+:\s*").unwrap().as_str(), "")
-        .split('\n')
-        .filter(|line| !line.trim().is_empty())
-        .filter(|line| !line.starts_with("at "))
-        .filter(|line| !line.contains("Command failed:"))
-        .filter(|line| !line.contains("(node:"))
-        .take(3)
-        .collect::<Vec<&str>>()
-        .join("\n")
-        .trim()
-        .to_string();
-
+    let clean_message = StringUtils::clean_error_message(&error_message);
     let fallback_message = format!(
         "Transpilation error: {}\n💡 This might be due to incorrect NullScript syntax. Run 'nsc keywords' to see available keywords.",
         clean_message
     );
 
+    let location = Location::new(file_path, line, column);
     NullScriptError::Transpile(
-        NullScriptTranspileError::with_location(fallback_message, file_path, line, column)
+        NullScriptTranspileError::with_location(fallback_message, location)
     )
 }
 
