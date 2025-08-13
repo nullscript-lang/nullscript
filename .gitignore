@@ -5,6 +5,7 @@ Cargo.lock
 
 # Examples and test files
 dist/
+scripts/
 
 # Environment variables
 .env
