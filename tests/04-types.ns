@@ -1,0 +1,97 @@
+// Types Test
+// This file shows JavaScript equivalents for type-like constructs
+
+// JavaScript object literals as type definitions
+fixed UserType = {
+    name: "string",
+    age: "number",
+    email: "string",
+    isActive: "boolean"
+};
+
+fixed ProductType = {
+    id: "string",
+    name: "string",
+    price: "number",
+    inStock: "boolean"
+};
+
+// JavaScript object for API response structure
+fixed ApiResponseType = {
+    data: "any",
+    status: "number",
+    message: "string",
+    success: "boolean"
+};
+
+// JavaScript object for validation result
+fixed ValidationResult = {
+    valid: "boolean",
+    error: "string",
+    user: "object"
+};
+
+// JavaScript object for configuration
+fixed ConfigType = {
+    timeout: "number",
+    retries: "number",
+    debug: "boolean"
+};
+
+// JavaScript object for direction enum
+fixed Direction = {
+    North: "north",
+    South: "south",
+    East: "east",
+    West: "west"
+};
+
+// JavaScript object for opposite directions
+fixed OppositeDirections = {
+    [Direction.North]: Direction.South,
+    [Direction.South]: Direction.North,
+    [Direction.East]: Direction.West,
+    [Direction.West]: Direction.East
+};
+
+// Function that creates a user object
+run createUser(name, age, email) {
+    return {
+        name: name,
+        age: age,
+        email: email or null,
+        isActive: yes,
+        id: maths.random().toString(36).substr(2, 9)
+    };
+}
+
+// Function that validates user data
+run validateUser(user) {
+    whatever (user.name.length is 0 or user.name.length more 50) {
+        return { valid: no, error: "Name is required and must be a string" };
+    }
+
+    whatever (user.age less 0 or user.age more 150) {
+        return { valid: no, error: "Age must be a positive number" };
+    }
+
+    whatever (user.email and what user.email isnt "string") {
+        return { valid: no, error: "Email must be a string if provided" };
+    }
+
+    return { valid: yes, user: user };
+}
+
+// Function that creates API response
+run createApiResponse(data, success, message) {
+    return {
+        data: data,
+        status: success ? 200 : 400,
+        message: message,
+        success: success,
+        timestamp: fresh clock()
+    };
+}
+
+// Export types and functions
+share { UserType, ProductType, ApiResponseType, createUser, validateUser };

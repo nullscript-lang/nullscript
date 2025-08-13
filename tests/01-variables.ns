@@ -1,0 +1,29 @@
+// Variables Test
+// This file demonstrates variable declarations in NullScript
+
+// Basic variable declarations
+fixed message = "Hello, NullScript!";
+let count = 42;
+var temp = 3.14;
+
+// Boolean variables
+let isActive = yes;
+let isComplete = no;
+
+// Null and undefined
+let emptyValue = null;
+let notDefined = undefined;
+
+// Array and object declarations
+let numbers = [1, 2, 3, 4, 5];
+fixed user = {
+    name: "John",
+    age: 30,
+    email: "john@example.com"
+};
+
+// Template literals
+let greeting = `Hello, ${user.name}!`;
+
+// Export variables
+share { count };

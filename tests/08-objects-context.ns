@@ -1,0 +1,124 @@
+// Objects and Context Test
+// This file demonstrates object creation and context handling in NullScript
+
+// Object creation
+run createObject() {
+    let obj = fresh thing();
+    let date = fresh clock();
+    let arr = fresh list();
+    let map = fresh dict();
+    let set = fresh unique();
+
+    speak.say("Objects created:", obj, date, arr, map, set);
+}
+
+// Class definition
+model User {
+    fixed name;
+    fixed email;
+
+    run __init__(name, email) {
+        self.name = name;
+        self.email = email;
+    }
+
+    run getName() {
+        return self.name;
+    }
+
+    run getEmail() {
+        return self.email;
+    }
+
+    run updateEmail(newEmail) {
+        self.email = newEmail;
+    }
+}
+
+// Class with inheritance
+model AdminUser inherits User {
+    fixed permissions;
+
+    run __init__(name, email, permissions) {
+        parent.__init__(name, email);
+        self.permissions = permissions;
+    }
+
+    run hasPermission(permission) {
+        return self.permissions.includes(permission);
+    }
+
+    run forever getAdminInfo() {
+        return {
+            name: self.name,
+            email: self.email,
+            permissions: self.permissions,
+            type: "admin"
+        };
+    }
+}
+
+// Object methods
+let calculator = {
+    add: run(a, b) {
+        return a + b;
+    },
+
+    subtract: run(a, b) {
+        return a - b;
+    },
+
+    multiply: run(a, b) {
+        return a * b;
+    },
+
+    divide: run(a, b) {
+        whatever (b is 0) {
+            trigger fresh fail("Division by zero");
+        }
+        return a / b;
+    }
+};
+
+// Context and this binding
+run demonstrateContext() {
+    let user = {
+        name: "John",
+        greet: run() {
+            speak.say(`Hello, ${self.name}!`);
+        },
+        greetArrow: () => {
+            speak.say(`Hello, ${self.name}!`);
+        }
+    };
+
+    user.greet(); // "Hello, John!"
+    user.greetArrow(); // "Hello, undefined!"
+}
+
+// Object property manipulation
+run manipulateObject() {
+    let obj = {
+        name: "Original",
+        value: 42
+    };
+
+    // Add property
+    obj.newProperty = "added";
+
+    // Remove property
+    remove obj.value;
+
+    // Check property existence
+    whatever ("name" inside obj) {
+        speak.say("Name property exists");
+    }
+
+    // Object iteration
+    since (let key part Object.keys(obj)) {
+        speak.say(`${key}: ${obj[key]}`);
+    }
+}
+
+// Export classes and functions
+share { User, AdminUser, calculator, demonstrateContext, manipulateObject };

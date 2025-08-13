@@ -1,7 +1,7 @@
 mod cli;
-mod errors;
-mod keywords;
-mod transpiler;
+mod core;
+mod compiler;
+mod utils;
 
 use cli::run;
 use std::env;
@@ -9,7 +9,7 @@ use std::env;
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
-    let program_path = args.get(0).map(|s| s.as_str()).unwrap_or("");
+    let program_path = args.first().map(|s| s.as_str()).unwrap_or("");
 
     let is_nullscript_command = if let Some(file_name) = std::path::Path::new(program_path).file_name() {
         file_name.to_string_lossy() == "nullscript"
@@ -18,7 +18,12 @@ async fn main() {
     };
 
     if is_nullscript_command {
-        println!("🎭 NullScript Transpiler");
+        if args.len() > 1 && (args[1] == "-v" || args[1] == "--version") {
+            println!("nullscript v{}", env!("CARGO_PKG_VERSION"));
+            std::process::exit(0);
+        }
+
+        println!("🎭 NullScript Transpiler v{}", env!("CARGO_PKG_VERSION"));
         println!("==================================================");
         println!("🚀 To transpile NullScript code, use the 'nsc' command.");
         println!();

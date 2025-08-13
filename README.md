@@ -1,17 +1,14 @@
 # NullScript 🎭
 
-**TypeScript with Attitude** - A fun parody programming language that transpiles to TypeScript/JavaScript.
-
-[![npm version](https://badge.fury.io/js/nullscript.svg)](https://badge.fury.io/js/nullscript)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+**JavaScript with Attitude** - A fun parody programming language that transpiles to JavaScript.
 
 ## ✨ Features
 
-- 🎪 **Fun keyword aliases** (`pls` instead of `return`, `maybe` instead of `let`, etc.)
-- 🔧 **Full TypeScript compatibility** - all TS features work exactly the same
+- 🎪 **Fun keyword aliases** (`speak` instead of `console`, `run` instead of `function`, etc.)
+- 🔧 **Pure JavaScript output** - no type annotations, just clean JS
 - 📁 **`.ns` file extension** for that special feeling
-- ⚡ **Zero runtime overhead** - compiles to identical JavaScript as TypeScript
-- 🛠️ **CLI tooling** with build, run, and type-check commands
+- ⚡ **Zero runtime overhead** - compiles directly to JavaScript
+- 🛠️ **CLI tooling** with build and run commands
 
 ## 🚀 Quick Start
 
@@ -25,13 +22,13 @@ npm install -g nullscript
 
 Create `hello.ns`:
 
-```typescript
-feels greet(name: string): string {
-  pls `Hello, ${name}! Welcome to NullScript! 🎭`;
+```javascript
+run greet(name) {
+  return `Hello, ${name}! Welcome to NullScript! 🎭`;
 }
 
-definitely message = greet("Developer");
-console.log(message);
+fixed message = greet("Developer");
+speak.say(message);
 ```
 
 ### Run it!
@@ -40,116 +37,52 @@ console.log(message);
 nsc run hello.ns
 ```
 
-## 📝 Language Reference
+## 📚 Documentation
 
-### File Extension
-- Use `.ns` extension for NullScript files
-- Example: `main.ns`, `utils.ns`, `index.ns`
+**📖 [Full Documentation Available Here](https://nullscript.js.org)**
 
-### Keyword Aliases
+The documentation site includes:
+- Complete language reference
+- All keyword aliases and their JavaScript equivalents
+- Advanced examples and tutorials
+- CLI usage guide
+- Best practices and tips
 
-| NullScript | TypeScript | Usage |
-|------------|------------|-------|
-| `pls` | `return` | `pls myValue;` |
-| `maybe` | `let` | `maybe x = 5;` |
-| `definitely` | `const` | `definitely name = "Alice";` |
-| `gimme` | `import` | `gimme fs from 'fs';` |
-| `yeet` | `export` | `yeet { myFunction };` |
-| `feels` | `function` | `feels add(a, b) { ... }` |
-| `bigbrain` | `class` | `bigbrain MyClass { ... }` |
-| `vibes` | `interface` | `vibes User { name: string; }` |
-| `checkthis` | `if` | `checkthis (condition) { ... }` |
-| `orelse` | `else` | `orelse { ... }` |
-| `orsomething` | `else if` | `orsomething (condition) { ... }` |
-| `loopin` | `for` | `loopin (item of items) { ... }` |
-| `whilevibe` | `while` | `whilevibe (condition) { ... }` |
-| `fr` | `true` | `definitely isValid = fr;` |
-| `cap` | `false` | `definitely isValid = cap;` |
-| `nocap` | `null` | `maybe value = nocap;` |
-| `ghost` | `undefined` | `maybe value = ghost;` |
-| `sus` | `any` | `feels process(data: sus) { ... }` |
-| `fresh` | `new` | `definitely obj = fresh MyClass();` |
-| `dis` | `this` | `dis.property` |
-| `and` | `&&` | `checkthis (a and b) { ... }` |
-| `or` | `||` | `maybe result = a or b;` |
-| `not` | `!` | `checkthis (not condition) { ... }` |
-
-## 🛠️ CLI Usage
+## 🛠️ Basic CLI Usage
 
 ```bash
-# Transpile to TypeScript (default)
-nsc build src/ --ts --outDir dist
-
 # Transpile to JavaScript
-nsc build src/ --js --outDir dist
-
-# Skip TypeScript type checking
-nsc build src/ --skip-type-check
+nsc build src/ --outDir dist
 
 # Run NullScript directly
 nsc run hello.ns
 
-# Type checking
-nsc check src/
-
 # Show all keywords
 nsc keywords
-
-# Show keywords by category
-nsc keywords --category control-flow
 ```
 
-### Build Options
-- `--ts` - Output TypeScript (default)
-- `--js` - Output JavaScript
-- `--outDir <dir>` - Output directory (default: `dist`)
-- `--skip-type-check` - Skip TypeScript type checking
+## 💻 Quick Example
 
-## 💻 Example
+```javascript
+use { readFileSync } from 'fs';
 
-```typescript
-gimme { readFileSync } from 'fs';
-
-vibes Person {
-  name: string;
-  age: number;
-}
-
-bigbrain Greeter {
-  feels greet(person: Person): string {
-    checkthis (person.age >= 18) {
-      pls `Hello, ${person.name}! You're an adult.`;
-    } orelse {
-      pls `Hello, ${person.name}! You're young.`;
+model Greeter {
+  run greet(person) {
+    whatever (person.age moreeq 18) {
+      return `Hello, ${person.name}! You're an adult.`;
+    } otherwise {
+      return `Hello, ${person.name}! You're young.`;
     }
   }
 }
 
-definitely greeter = fresh Greeter();
-maybe person: Person = { name: "Alice", age: 25 };
-console.log(greeter.greet(person));
+fixed greeter = fresh Greeter();
+let person = { name: "Alice", age: 25 };
+speak.say(greeter.greet(person));
 ```
 
-## 🤝 TypeScript Compatibility
-
-NullScript maintains **100% compatibility** with TypeScript:
-- ✅ All TypeScript types work identically
-- ✅ Same compilation output
-- ✅ Compatible with existing TypeScript tooling
-- ✅ Same runtime behavior
-- ✅ Works with TypeScript compiler options
-- ✅ Can import/export with TypeScript projects
-
-## 🔗 Links
-
-- **GitHub**: https://github.com/nullscript-lang/nullscript
-- **npm**: https://www.npmjs.com/package/nullscript
-- **Documentation**: https://github.com/nullscript-lang/nullscript#readme
-
-## 📄 License
-
-MIT License
-
 ---
+
+**📖 [Visit the full documentation](https://nullscript.js.org) for complete language reference, examples, and tutorials.**
 
 *"NullScript: Because programming should be fun, even when it's serious."* 🎭

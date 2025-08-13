@@ -1,0 +1,91 @@
+// Control Flow Test
+// This file demonstrates control flow statements in NullScript
+
+// If-else statements
+run checkNumber(number) {
+    whatever (number more 0) {
+        return "positive";
+    } otherwise {
+        return "negative or zero";
+    }
+}
+
+// Nested if-else
+run gradeScore(score) {
+    whatever (score moreeq 90) {
+        return "A";
+    } otherwise whatever (score moreeq 80) {
+        return "B";
+    } otherwise whatever (score moreeq 70) {
+        return "C";
+    } otherwise {
+        return "F";
+    }
+}
+
+// For loops
+run sumArray(numbers) {
+    let total = 0;
+    since (let i = 0; i less numbers.length; i++) {
+        total += numbers[i];
+    }
+    return total;
+}
+
+// While loops
+run countdown(start) {
+    let count = start;
+    when (count more 0) {
+        speak.say(count);
+        count--;
+    }
+    speak.say("Blast off!");
+}
+
+// Switch statements
+run getDayName(dayNumber) {
+    switch (dayNumber) {
+        case 1:
+            return "Monday";
+        case 2:
+            return "Tuesday";
+        case 3:
+            return "Wednesday";
+        case 4:
+            return "Thursday";
+        case 5:
+            return "Friday";
+        case 6:
+            return "Saturday";
+        case 7:
+            return "Sunday";
+        done:
+            return "Invalid day";
+    }
+}
+
+// Break and continue
+run findFirstEven(numbers) {
+    since (let i = 0; i less numbers.length; i++) {
+        whatever (numbers[i] % 2 is 0) {
+            return numbers[i];
+            stop;
+        }
+    }
+    return null;
+}
+
+// Loop with continue
+run filterPositive(numbers) {
+    let positives = [];
+    since (let i = 0; i less numbers.length; i++) {
+        whatever (numbers[i] lesseq 0) {
+            keepgoing;
+        }
+        positives.push(numbers[i]);
+    }
+    return positives;
+}
+
+// Export functions
+share { checkNumber, gradeScore, sumArray, countdown, getDayName, findFirstEven, filterPositive };

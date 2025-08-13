@@ -1,0 +1,48 @@
+// Functions Test
+// This file demonstrates function declarations in NullScript
+
+// Basic function declaration
+run greet(name) {
+    return `Hello, ${name}!`;
+}
+
+// Function with multiple parameters
+run add(a, b) {
+    return a + b;
+}
+
+// Function with default parameters
+run createUser(name, age = 18, email = null) {
+    return {
+        name: name,
+        age: age,
+        email: email,
+        createdAt: fresh clock()
+    };
+}
+
+// Arrow function equivalent
+let multiply = (x, y) => x * y;
+
+// Function with conditional logic
+run checkNumber(number) {
+    whatever (number more 0) {
+        return "positive";
+    } otherwise {
+        return "negative or zero";
+    }
+}
+
+// Function with loops
+run processArray(items) {
+    let results = [];
+    since (let i = 0; i less items.length; i++) {
+        whatever (items[i] more 0) {
+            results.push(items[i] * 2);
+        }
+    }
+    return results;
+}
+
+// Export functions
+share { greet, add, createUser, multiply, checkNumber, processArray };
