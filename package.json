@@ -29,6 +29,6 @@
     "type": "git",
     "url": "https://github.com/nullscript-lang/nullscript.git"
   },
-  "homepage": "https://github.com/nullscript-lang/nullscript#readme",
+  "homepage": "https://nullscript.js.org",
   "dependencies": {}
 }
