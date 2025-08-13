@@ -36,33 +36,6 @@ impl Location {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OutputFormat {
-    TypeScript,
-    JavaScript,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::TypeScript
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TranspileOptions {
-    pub output_format: OutputFormat,
-    pub skip_type_check: bool,
-}
-
-impl Default for TranspileOptions {
-    fn default() -> Self {
-        Self {
-            output_format: OutputFormat::TypeScript,
-            skip_type_check: false,
-        }
-    }
-}
-
 pub trait WithLocation {
     fn with_location(message: String, location: Location) -> Self;
 }

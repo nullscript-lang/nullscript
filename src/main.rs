@@ -9,7 +9,7 @@ use std::env;
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
-    let program_path = args.get(0).map(|s| s.as_str()).unwrap_or("");
+    let program_path = args.first().map(|s| s.as_str()).unwrap_or("");
 
     let is_nullscript_command = if let Some(file_name) = std::path::Path::new(program_path).file_name() {
         file_name.to_string_lossy() == "nullscript"

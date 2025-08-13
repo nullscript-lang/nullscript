@@ -4,8 +4,7 @@
 Cargo.lock
 
 # Examples and test files
-examples/
-examples-output/
+dist/
 
 # Environment variables
 .env
@@ -29,6 +28,9 @@ examples-output/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Scripts
+scripts/
 
 # Logs
 logs

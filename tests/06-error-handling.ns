@@ -1,0 +1,121 @@
+// Error Handling Test
+// This file demonstrates error handling constructs in NullScript
+
+// Basic try-catch
+run safeDivide(a, b) {
+    test {
+        whatever (b is 0) {
+            trigger fresh fail("Division by zero");
+        }
+        return a / b;
+    } grab (error) {
+        speak.say("Error:", error.message);
+        return null;
+    }
+}
+
+// Try-catch with finally
+run processFile(filename) {
+    let fileHandle = null;
+    test {
+        fileHandle = fresh File(filename);
+        let content = fileHandle.read();
+        return content;
+    } grab (error) {
+        speak.say("File processing failed:", error.message);
+        return null;
+    } atLast {
+        whatever (fileHandle isnt null) {
+            fileHandle.close();
+        }
+    }
+}
+
+// Async error handling
+run later fetchData(url) {
+    test {
+        let response = hold pull(url);
+        whatever (response.ok isnt yes) {
+            trigger fresh fail(`HTTP ${response.status}`);
+        }
+        return hold response.json();
+    } grab (error) {
+        speak.say("Fetch failed:", error.message);
+        return null;
+    }
+}
+
+// JSON parsing with error handling
+run parseJSON(jsonString) {
+    test {
+        return json.parse(jsonString);
+    } grab (error) {
+        speak.say("JSON parsing failed:", error.message);
+        return null;
+    }
+}
+
+// File system error handling
+run later readFile(filename) {
+    test {
+        let fs = need("fs");
+        let data = hold fs.promises.readFile(filename, "utf8");
+        return data;
+    } grab (error) {
+        speak.say("File read failed:", error.message);
+        return null;
+    }
+}
+
+// Database operation with error handling
+run later databaseOperation() {
+    test {
+        let connection = hold connectToDatabase();
+        let result = hold connection.query("SELECT * FROM users");
+        hold connection.close();
+        return result;
+    } grab (error) {
+        speak.say("Database operation failed:", error.message);
+        return null;
+    }
+}
+
+// API request with error handling
+run later apiRequest(endpoint) {
+    test {
+        let response = hold pull(endpoint);
+        whatever (response.status is 404) {
+            trigger fresh fail("Resource not found");
+        } otherwise whatever (response.status isnt 200) {
+            trigger fresh fail(`HTTP ${response.status}`);
+        }
+        return hold response.json();
+    } grab (error) {
+        whatever (error.message.includes("not found")) {
+            speak.say("Resource not found, please check the URL");
+        } otherwise {
+            speak.say("API request failed:", error.message);
+        }
+        return null;
+    }
+}
+
+// Resource cleanup with finally
+run later processWithCleanup() {
+    let resource = null;
+    test {
+        resource = hold acquireResource();
+        let result = hold processResource(resource);
+        speak.say("Processing result:", result);
+    } grab (error) {
+        speak.say("Processing failed:", error.message);
+    } atLast {
+        whatever (resource isnt null) {
+            hold releaseResource(resource);
+            speak.say("Resource released");
+        }
+    }
+}
+
+// Export functions
+share { safeDivide, processFile, fetchData, parseJSON, readFile, databaseOperation, apiRequest, processWithCleanup };

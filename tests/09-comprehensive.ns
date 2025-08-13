@@ -1,0 +1,141 @@
+// Comprehensive Test
+// This file demonstrates all NullScript features together
+
+// Import dependencies
+use { useState, useEffect } from "react";
+use express from "express";
+
+// Type definitions
+fixed User = {
+    id: "string",
+    name: "string",
+    email: "string",
+    age: "number"
+};
+
+fixed ApiResponse = {
+    data: "any",
+    success: "boolean",
+    message: "string"
+};
+
+// Class definition
+model UserManager {
+    fixed users = fresh dict();
+
+    run __init__() {
+        speak.say("UserManager initialized");
+    }
+
+    run addUser(user) {
+        test {
+            whatever (user.name is null or user.email is null) {
+                trigger fresh fail("Name and email are required");
+            }
+
+            let id = maths.random().toString(36).substr(2, 9);
+            self.users.set(id, user);
+            return { success: yes, id: id };
+        } grab (error) {
+            speak.say("Error adding user:", error.message);
+            return { success: no, error: error.message };
+        }
+    }
+
+    run getUser(id) {
+        whatever (self.users.has(id)) {
+            return self.users.get(id);
+        } otherwise {
+            return null;
+        }
+    }
+
+     later loadUsers() {
+        test {
+            let response = hold pull("/api/users");
+            whatever (response.ok isnt yes) {
+                trigger fresh fail(`HTTP ${response.status}`);
+            }
+
+            let users = hold response.json();
+            since (let user part users) {
+                self.addUser(user);
+            }
+
+            speak.say(`Loaded ${users.length} users`);
+        } grab (error) {
+            speak.say("Failed to load users:", error.message);
+        }
+    }
+
+    run forever getStats() {
+        return {
+            totalUsers: self.users.size,
+            timestamp: fresh clock()
+        };
+    }
+}
+
+// Utility functions
+run validateEmail(email) {
+    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+run formatUser(user) {
+    whatever (user is null) {
+        return null;
+    }
+
+    return {
+        ...user,
+        selfplayName: `${user.name} (${user.age})`,
+        isAdult: user.age moreeq 18
+    };
+}
+
+// Main application logic
+run later main() {
+    let userManager = fresh UserManager();
+
+    // Add some test users
+    let testUsers = [
+        { name: "John Doe", email: "john@example.com", age: 30 },
+        { name: "Jane Smith", email: "jane@example.com", age: 25 },
+        { name: "Bob Johnson", email: "bob@example.com", age: 35 }
+    ];
+
+    since (let user part testUsers) {
+        whatever (validateEmail(user.email)) {
+            let result = userManager.addUser(user);
+            whatever (result.success) {
+                speak.say(`Added user: ${user.name} with ID: ${result.id}`);
+            } otherwise {
+                speak.say(`Failed to add user: ${user.name}`);
+            }
+        } otherwise {
+            speak.say(`Invalid email for user: ${user.name}`);
+        }
+    }
+
+    // Load users from API
+    hold userManager.loadUsers();
+
+    // Get statistics
+    let stats = userManager.forever.getStats();
+    speak.say("User statistics:", stats);
+}
+
+// Error handling wrapper
+run later runWithErrorHandling() {
+    test {
+        hold main();
+    } grab (error) {
+        speak.say("Application error:", error.message);
+    } atLast {
+        speak.say("Application finished");
+    }
+}
+
+// Export everything
+share { UserManager, validateEmail, formatUser, main, runWithErrorHandling };

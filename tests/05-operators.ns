@@ -1,0 +1,75 @@
+// Operators Test
+// This file demonstrates logical and comparison operators in NullScript
+
+// Logical operators
+run logicalOperators() {
+    let a = yes;
+    let b = no;
+    let c = null;
+    let d = undefined;
+
+    // AND operator
+    speak.say("AND operations:");
+    speak.say(a and b); // false
+    speak.say(a and a); // true
+    speak.say(b and b); // false
+
+    // OR operator
+    speak.say("OR operations:");
+    speak.say(a or b); // true
+    speak.say(a or a); // true
+    speak.say(b or b); // false
+
+    // NOT operator
+    speak.say("NOT operations:");
+    speak.say(not a); // false
+    speak.say(not b); // true
+    speak.say(not c); // true
+    speak.say(not d); // true
+
+    // Comparison operators
+    let x = 5;
+    let y = 10;
+
+    speak.say("Comparison operations:");
+    speak.say(x is y); // false
+    speak.say(x isnt y); // true
+    speak.say(x more y); // false
+    speak.say(x less y); // true
+    speak.say(x moreeq y); // false
+    speak.say(x lesseq y); // true
+
+    // Type checking
+    let str = "hello";
+    let num = 42;
+    let arr = [1, 2, 3];
+
+    speak.say("Type checking:");
+    speak.say(what str); // "string"
+    speak.say(what num); // "number"
+    speak.say(what arr); // "object"
+    speak.say(arr kind Array); // true
+}
+
+// Conditional logic with operators
+run checkConditions(value) {
+    whatever (value more 0 and value less 100) {
+        return "Value is between 0 and 100";
+    } otherwise whatever (value is 0 or value is 100) {
+        return "Value is exactly 0 or 100";
+    } otherwise {
+        return "Value is outside the range";
+    }
+}
+
+// Null and undefined checks
+run checkNullish(value) {
+    whatever (value is null or value is undefined) {
+        return "Value is null or undefined";
+    } otherwise {
+        return "Value has a value";
+    }
+}
+
+// Export functions
+share { logicalOperators, checkConditions, checkNullish };

@@ -9,13 +9,11 @@ use std::process::Command;
 #[command(
     name = "nsc",
     version = None,
-    about = "NullScript transpiler - TypeScript with attitude",
+    about = "NullScript transpiler - JavaScript with attitude",
     long_about = None,
     after_help = "Examples:
-  nsc build src/                    # Transpile all .ns files in src/ to TypeScript
-  nsc build src/ --js               # Transpile to JavaScript
+  nsc build src/                    # Transpile all .ns files in src/ to JavaScript
   nsc run hello.ns                  # Run a NullScript file
-  nsc check src/                    # Type-check NullScript files
   nsc keywords                      # Show all available keywords
   nsc system --info                 # Show system information
   nsc info src/ --detailed          # Show detailed file information
@@ -34,7 +32,6 @@ pub struct Cli {
 pub enum Commands {
     Build(BuildArgs),
     Run(RunArgs),
-    Check(CheckArgs),
     Keywords(KeywordsArgs),
     System(SystemArgs),
     Info(InfoArgs),
@@ -46,29 +43,14 @@ pub struct BuildArgs {
 
     #[arg(short = 'o', long = "outDir", default_value = "dist")]
     pub out_dir: PathBuf,
-
-    #[arg(long = "js")]
-    pub js: bool,
-
-    #[arg(long = "ts")]
-    pub ts: bool,
-
-    #[arg(long = "skip-type-check")]
-    pub skip_type_check: bool,
 }
 
 #[derive(Args)]
 pub struct RunArgs {
     pub file: PathBuf,
-
-    #[arg(long = "skip-type-check")]
-    pub skip_type_check: bool,
 }
 
-#[derive(Args)]
-pub struct CheckArgs {
-    pub path: PathBuf,
-}
+
 
 #[derive(Args)]
 pub struct KeywordsArgs {
@@ -93,9 +75,8 @@ pub struct InfoArgs {
 impl CliHandler {
     pub async fn handle_command(&self, command: Commands) -> Result<(), NullScriptError> {
         match command {
-            Commands::Build(args) => self.handle_build(args.path, args.out_dir, args.js, args.skip_type_check).await,
-            Commands::Run(args) => self.handle_run(args.file, args.skip_type_check).await,
-            Commands::Check(args) => self.handle_check(args.path).await,
+            Commands::Build(args) => self.handle_build(args.path, args.out_dir).await,
+            Commands::Run(args) => self.handle_run(args.file).await,
             Commands::Keywords(args) => self.handle_keywords(args.category),
             Commands::System(args) => self.handle_system(args),
             Commands::Info(args) => self.handle_info(args),
@@ -131,24 +112,15 @@ impl CliHandler {
         Command::new("node").arg("--version").output().is_ok()
     }
 
-    pub fn check_tsc_availability() -> bool {
-        Command::new("tsc").arg("--version").output().is_ok()
-    }
-
     pub fn show_system_info() {
         println!("{}", "🔧 System Information".cyan());
         println!("{}", "=".repeat(30).bright_black());
         println!("Node.js: {}", if Self::check_node_availability() { "✅ Available".green() } else { "❌ Not found".red() });
-        println!("TypeScript: {}", if Self::check_tsc_availability() { "✅ Available".green() } else { "❌ Not found".red() });
         println!("NullScript: {} v{}", "✅ Available".green(), env!("CARGO_PKG_VERSION"));
     }
 
-    pub fn handle_system(&self, args: SystemArgs) -> Result<(), NullScriptError> {
-        if args.info {
-            Self::show_system_info();
-        } else {
-            Self::show_system_info();
-        }
+    pub fn handle_system(&self, _args: SystemArgs) -> Result<(), NullScriptError> {
+        Self::show_system_info();
         Ok(())
     }
 
@@ -221,7 +193,7 @@ impl CliHandler {
                     let modified = FileUtils::get_modified_time(&file_path)
                         .ok()
                         .and_then(|m| m.elapsed().ok())
-                        .map(|d| format_duration(d))
+                        .map(format_duration)
                         .unwrap_or_else(|| "unknown".to_string());
 
                     file_details.push((relative_path, ext, size, lines, modified));

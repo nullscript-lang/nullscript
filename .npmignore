@@ -2,6 +2,9 @@
 src/
 Cargo.toml
 Cargo.lock
+scripts/
+tests/
+dist/
 
 # Development files
 .gitignore

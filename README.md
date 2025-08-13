@@ -1,17 +1,17 @@
 # NullScript 🎭
 
-**TypeScript with Attitude** - A fun parody programming language that transpiles to TypeScript/JavaScript.
+**JavaScript with Attitude** - A fun parody programming language that transpiles to JavaScript.
 
 [![npm version](https://badge.fury.io/js/nullscript.svg)](https://badge.fury.io/js/nullscript)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Features
 
-- 🎪 **Fun keyword aliases** (`pls` instead of `return`, `maybe` instead of `let`, etc.)
-- 🔧 **Full TypeScript compatibility** - all TS features work exactly the same
+- 🎪 **Fun keyword aliases** (`speak` instead of `console`, `run` instead of `function`, etc.)
+- 🔧 **Pure JavaScript output** - no type annotations, just clean JS
 - 📁 **`.ns` file extension** for that special feeling
-- ⚡ **Zero runtime overhead** - compiles to identical JavaScript as TypeScript
-- 🛠️ **CLI tooling** with build, run, and type-check commands
+- ⚡ **Zero runtime overhead** - compiles directly to JavaScript
+- 🛠️ **CLI tooling** with build and run commands
 
 ## 🚀 Quick Start
 
@@ -25,13 +25,13 @@ npm install -g nullscript
 
 Create `hello.ns`:
 
-```typescript
-feels greet(name: string): string {
-  pls `Hello, ${name}! Welcome to NullScript! 🎭`;
+```javascript
+run greet(name) {
+  return `Hello, ${name}! Welcome to NullScript! 🎭`;
 }
 
-definitely message = greet("Developer");
-console.log(message);
+fixed message = greet("Developer");
+speak.say(message);
 ```
 
 ### Run it!
@@ -48,49 +48,139 @@ nsc run hello.ns
 
 ### Keyword Aliases
 
-| NullScript | TypeScript | Usage |
+| NullScript | JavaScript | Usage |
 |------------|------------|-------|
-| `pls` | `return` | `pls myValue;` |
-| `maybe` | `let` | `maybe x = 5;` |
-| `definitely` | `const` | `definitely name = "Alice";` |
-| `gimme` | `import` | `gimme fs from 'fs';` |
-| `yeet` | `export` | `yeet { myFunction };` |
-| `feels` | `function` | `feels add(a, b) { ... }` |
-| `bigbrain` | `class` | `bigbrain MyClass { ... }` |
-| `vibes` | `interface` | `vibes User { name: string; }` |
-| `checkthis` | `if` | `checkthis (condition) { ... }` |
-| `orelse` | `else` | `orelse { ... }` |
-| `orsomething` | `else if` | `orsomething (condition) { ... }` |
-| `loopin` | `for` | `loopin (item of items) { ... }` |
-| `whilevibe` | `while` | `whilevibe (condition) { ... }` |
-| `fr` | `true` | `definitely isValid = fr;` |
-| `cap` | `false` | `definitely isValid = cap;` |
-| `nocap` | `null` | `maybe value = nocap;` |
-| `ghost` | `undefined` | `maybe value = ghost;` |
-| `sus` | `any` | `feels process(data: sus) { ... }` |
-| `fresh` | `new` | `definitely obj = fresh MyClass();` |
-| `dis` | `this` | `dis.property` |
-| `and` | `&&` | `checkthis (a and b) { ... }` |
-| `or` | `||` | `maybe result = a or b;` |
-| `not` | `!` | `checkthis (not condition) { ... }` |
+| `return` | `return` | `return myValue;` |
+| `run` | `function` | `run add(a, b) { ... }` |
+| `fixed` | `const` | `fixed name = "Alice";` |
+| `let` | `let` | `let x = 5;` |
+| `var` | `var` | `var legacy = "old";` |
+| `use` | `import` | `use fs from 'fs';` |
+| `share` | `export` | `share { myFunction };` |
+| `whatever` | `if` | `whatever (condition) { ... }` |
+| `otherwise` | `else` | `otherwise { ... }` |
+| `since` | `for` | `since (item of items) { ... }` |
+| `when` | `while` | `when (condition) { ... }` |
+| `switch` | `switch` | `switch (value) { ... }` |
+| `case` | `case` | `case "value":` |
+| `done` | `default` | `done:` |
+| `stop` | `break` | `stop;` |
+| `keepgoing` | `continue` | `keepgoing;` |
+| `test` | `try` | `test { ... }` |
+| `grab` | `catch` | `grab (error) { ... }` |
+| `atLast` | `finally` | `atLast { ... }` |
+| `trigger` | `throw` | `trigger new Error();` |
+| `fresh` | `new` | `fresh MyClass();` |
+| `self` | `this` | `self.property` |
+| `parent` | `super` | `parent.method();` |
+| `model` | `class` | `model MyClass { ... }` |
+| `__init__` | `constructor` | `__init__() { ... }` |
+| `inherits` | `extends` | `model Child inherits Parent` |
+| `forever` | `static` | `run forever method() { ... }` |
+| `later` | `async` | `run later fetch() { ... }` |
+| `hold` | `await` | `let data = hold fetch();` |
+| `yes` | `true` | `fixed isValid = yes;` |
+| `no` | `false` | `fixed isValid = no;` |
+| `null` | `null` | `let value = null;` |
+| `undefined` | `undefined` | `let value = undefined;` |
+| `is` | `===` | `whatever (a is b) { ... }` |
+| `isnt` | `!==` | `whatever (a isnt b) { ... }` |
+| `more` | `>` | `whatever (a more b) { ... }` |
+| `less` | `<` | `whatever (a less b) { ... }` |
+| `moreeq` | `>=` | `whatever (a moreeq b) { ... }` |
+| `lesseq` | `<=` | `whatever (a lesseq b) { ... }` |
+| `and` | `&&` | `whatever (a and b) { ... }` |
+| `or` | `||` | `let result = a or b;` |
+| `not` | `!` | `whatever (not condition) { ... }` |
+| `remove` | `delete` | `remove obj.property;` |
+| `what` | `typeof` | `what value` |
+| `kind` | `instanceof` | `whatever (obj kind Array) { ... }` |
+| `inside` | `in` | `whatever ("key" inside obj) { ... }` |
+| `part` | `of` | `since (item part items) { ... }` |
+| `nothing` | `void` | `nothing 0` |
+| `using` | `with` | `using (obj) { ... }` |
+| `freeze` | `debugger` | `freeze;` |
+| `pause` | `yield` | `pause value;` |
+| `getter` | `get` | `getter property() { ... }` |
+| `setter` | `set` | `setter property(value) { ... }` |
+
+### Console API
+| NullScript | JavaScript | Usage |
+|------------|------------|-------|
+| `speak` | `console` | `speak.say("Hello");` |
+| `say` | `log` | `speak.say("message");` |
+| `yell` | `warn` | `speak.yell("warning");` |
+| `scream` | `error` | `speak.scream("error");` |
+| `whisper` | `info` | `speak.whisper("info");` |
+| `peek` | `debug` | `speak.peek("debug");` |
+| `check` | `assert` | `speak.check(condition);` |
+| `wipe` | `clear` | `speak.wipe();` |
+| `tally` | `count` | `speak.tally("label");` |
+| `resetcount` | `countReset` | `speak.resetcount("label");` |
+| `dir` | `dir` | `speak.dir(obj);` |
+| `deepdir` | `dirxml` | `speak.deepdir(obj);` |
+| `group` | `group` | `speak.group("label");` |
+| `fold` | `groupCollapsed` | `speak.fold("label");` |
+| `ungroup` | `groupEnd` | `speak.ungroup();` |
+| `show` | `table` | `speak.show(data);` |
+| `time` | `time` | `speak.time("label");` |
+| `stoptimer` | `timeEnd` | `speak.stoptimer("label");` |
+| `logtimer` | `timeLog` | `speak.logtimer("label");` |
+| `backtrace` | `trace` | `speak.backtrace();` |
+
+### Built-in Objects
+| NullScript | JavaScript | Usage |
+|------------|------------|-------|
+| `thing` | `Object` | `fresh thing()` |
+| `list` | `Array` | `fresh list()` |
+| `text` | `String` | `fresh text()` |
+| `num` | `Number` | `fresh num()` |
+| `bool` | `Boolean` | `fresh bool()` |
+| `clock` | `Date` | `fresh clock()` |
+| `maths` | `Math` | `maths.random()` |
+| `json` | `JSON` | `json.parse()` |
+| `pattern` | `RegExp` | `fresh pattern()` |
+| `fail` | `Error` | `fresh fail()` |
+| `promise` | `Promise` | `fresh promise()` |
+| `dict` | `Map` | `fresh dict()` |
+| `unique` | `Set` | `fresh unique()` |
+| `weakdict` | `WeakMap` | `fresh weakdict()` |
+| `weakunique` | `WeakSet` | `fresh weakunique()` |
+| `symbol` | `Symbol` | `fresh symbol()` |
+| `proxy` | `Proxy` | `fresh proxy()` |
+| `reflect` | `Reflect` | `reflect.get()` |
+| `intl` | `Intl` | `intl.DateTimeFormat()` |
+| `wasm` | `WebAssembly` | `wasm.instantiate()` |
+
+### Global Functions
+| NullScript | JavaScript | Usage |
+|------------|------------|-------|
+| `toint` | `parseInt` | `toint("123")` |
+| `tofloat` | `parseFloat` | `tofloat("123.45")` |
+| `isnan` | `isNaN` | `isnan(value)` |
+| `isfinite` | `isFinite` | `isfinite(value)` |
+| `encodeurl` | `encodeURI` | `encodeurl(url)` |
+| `encodeurlpart` | `encodeURIComponent` | `encodeurlpart(part)` |
+| `decodeurl` | `decodeURI` | `decodeurl(url)` |
+| `decodeurlpart` | `decodeURIComponent` | `decodeurlpart(part)` |
+| `esc` | `escape` | `esc(string)` |
+| `unesc` | `unescape` | `unesc(string)` |
+| `runcode` | `eval` | `runcode(code)` |
+| `delay` | `setTimeout` | `delay(callback, 1000)` |
+| `repeat` | `setInterval` | `repeat(callback, 1000)` |
+| `stopdelay` | `clearTimeout` | `stopdelay(id)` |
+| `stoprepeat` | `clearInterval` | `stoprepeat(id)` |
+| `pull` | `fetch` | `pull(url)` |
+| `need` | `require` | `need("module")` |
 
 ## 🛠️ CLI Usage
 
 ```bash
-# Transpile to TypeScript (default)
-nsc build src/ --ts --outDir dist
-
 # Transpile to JavaScript
-nsc build src/ --js --outDir dist
-
-# Skip TypeScript type checking
-nsc build src/ --skip-type-check
+nsc build src/ --outDir dist
 
 # Run NullScript directly
 nsc run hello.ns
-
-# Type checking
-nsc check src/
 
 # Show all keywords
 nsc keywords
@@ -100,45 +190,36 @@ nsc keywords --category control-flow
 ```
 
 ### Build Options
-- `--ts` - Output TypeScript (default)
-- `--js` - Output JavaScript
 - `--outDir <dir>` - Output directory (default: `dist`)
-- `--skip-type-check` - Skip TypeScript type checking
 
 ## 💻 Example
 
-```typescript
-gimme { readFileSync } from 'fs';
+```javascript
+use { readFileSync } from 'fs';
 
-vibes Person {
-  name: string;
-  age: number;
-}
-
-bigbrain Greeter {
-  feels greet(person: Person): string {
-    checkthis (person.age >= 18) {
-      pls `Hello, ${person.name}! You're an adult.`;
-    } orelse {
-      pls `Hello, ${person.name}! You're young.`;
+model Greeter {
+  run greet(person) {
+    whatever (person.age moreeq 18) {
+      return `Hello, ${person.name}! You're an adult.`;
+    } otherwise {
+      return `Hello, ${person.name}! You're young.`;
     }
   }
 }
 
-definitely greeter = fresh Greeter();
-maybe person: Person = { name: "Alice", age: 25 };
-console.log(greeter.greet(person));
+fixed greeter = fresh Greeter();
+let person = { name: "Alice", age: 25 };
+speak.say(greeter.greet(person));
 ```
 
-## 🤝 TypeScript Compatibility
+## 🤝 JavaScript Focus
 
-NullScript maintains **100% compatibility** with TypeScript:
-- ✅ All TypeScript types work identically
-- ✅ Same compilation output
-- ✅ Compatible with existing TypeScript tooling
-- ✅ Same runtime behavior
-- ✅ Works with TypeScript compiler options
-- ✅ Can import/export with TypeScript projects
+NullScript compiles directly to clean JavaScript:
+- ✅ No type annotations in output
+- ✅ Compatible with all JavaScript environments
+- ✅ Same runtime behavior as regular JavaScript
+- ✅ Can import/export with JavaScript and Node.js projects
+- ✅ Simpler build process without TypeScript dependency
 
 ## 🔗 Links
 

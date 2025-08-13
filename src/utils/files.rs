@@ -1,25 +1,25 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::fs;
 use crate::core::NullScriptError;
 
 pub struct FileUtils;
 
 impl FileUtils {
-    pub fn get_extension(file_path: &PathBuf) -> Option<String> {
+    pub fn get_extension(file_path: &Path) -> Option<String> {
         file_path
             .extension()
             .and_then(|ext| ext.to_str())
             .map(|s| s.to_string())
     }
 
-    pub fn get_stem(file_path: &PathBuf) -> Option<String> {
+    pub fn get_stem(file_path: &Path) -> Option<String> {
         file_path
             .file_stem()
             .and_then(|stem| stem.to_str())
             .map(|s| s.to_string())
     }
 
-    pub fn has_extension(file_path: &PathBuf, extension: &str) -> bool {
+    pub fn has_extension(file_path: &Path, extension: &str) -> bool {
         Self::get_extension(file_path)
             .map(|ext| ext == extension)
             .unwrap_or(false)
@@ -43,7 +43,7 @@ impl FileUtils {
         }
     }
 
-    pub fn is_nullscript_file(file_path: &PathBuf) -> bool {
+    pub fn is_nullscript_file(file_path: &Path) -> bool {
         Self::has_extension(file_path, "ns")
     }
 

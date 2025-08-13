@@ -1,0 +1,81 @@
+// Imports and Exports Test
+// This file demonstrates module system in NullScript
+
+// Import statements
+use { useState, useEffect } from "react";
+use express from "express";
+use { readFile, writeFile } from "fs/promises";
+use * as utils from "./utils.js";
+
+// Default imports
+use default as React from "react";
+use default as axios from "axios";
+
+// Named imports with aliases
+use { Component as ReactComponent } from "react";
+use { createElement as create } from "react";
+
+// Import with destructuring
+use {
+    add,
+    subtract,
+    multiply,
+    divide
+} from "./math.js";
+
+// Export statements
+share { add, subtract, multiply, divide };
+share default run add(a, b) {
+    return a + b;
+};
+
+// Named exports
+share run greet(name) {
+    return `Hello, ${name}!`;
+};
+
+share fixed PI = 3.14159;
+share let VERSION = "1.0.0";
+
+// Export with aliases
+share { greet as sayHello };
+share { PI as PI_CONSTANT };
+
+// Re-export
+share { add, subtract } from "./math.js";
+share * from "./utils.js";
+
+// Export lists
+share {
+    add,
+    subtract,
+    multiply,
+    divide,
+    greet,
+    PI,
+    VERSION
+};
+
+// Dynamic imports
+run later loadModule() {
+    test {
+        let module = hold use("./dynamic-module.js");
+        return module.default();
+    } grab (error) {
+        speak.say("Module loading failed:", error.message);
+    }
+}
+
+// Conditional imports
+run later loadConditionalModule(condition) {
+    whatever (condition) {
+        let module = hold use("./feature-a.js");
+        return module;
+    } otherwise {
+        let module = hold use("./feature-b.js");
+        return module;
+    }
+}
+
+// Export functions
+share { loadModule, loadConditionalModule };

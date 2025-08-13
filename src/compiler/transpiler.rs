@@ -1,15 +1,12 @@
-use crate::core::{NullScriptError, NullScriptKeywords, NullScriptSyntaxError, NullScriptTranspileError, parse_typescript_error};
-use crate::core::types::{Location, TranspileOptions, OutputFormat, WithLocation};
-use crate::utils::commands::CommandUtils;
-use crate::utils::regex::RegexUtils;
+use crate::core::{NullScriptError, NullScriptSyntaxError};
+use crate::core::keywords::{KEYWORDS, FORBIDDEN_KEYWORDS, INVALID_SYNTAX};
+use crate::core::types::{Location, WithLocation};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use walkdir::WalkDir;
 
-pub struct NullScriptTranspiler {
-    keywords: NullScriptKeywords,
-}
+pub struct NullScriptTranspiler {}
 
 impl Default for NullScriptTranspiler {
     fn default() -> Self {
@@ -19,14 +16,121 @@ impl Default for NullScriptTranspiler {
 
 impl NullScriptTranspiler {
     pub fn new() -> Self {
-        Self {
-            keywords: NullScriptKeywords::new(),
-        }
+        Self {}
     }
 
     pub fn validate_syntax(&self, source: &str, file_path: Option<&Path>) -> Result<(), NullScriptError> {
-        let lines: Vec<&str> = source.split('\n').collect();
+        let file_name = file_path.map(|p| p.to_string_lossy()).unwrap_or_else(|| "unknown".into());
 
+
+        let lines: Vec<&str> = source.split('\n').collect();
+        let mut code_without_comments = String::new();
+
+        for line in lines {
+            let trimmed_line = line.trim();
+
+
+            if trimmed_line.is_empty() || trimmed_line.starts_with("//") || trimmed_line.starts_with("/*") {
+                continue;
+            }
+
+
+            if let Some(comment_start) = line.find("//") {
+                code_without_comments.push_str(&line[..comment_start]);
+            } else {
+                code_without_comments.push_str(line);
+            }
+            code_without_comments.push('\n');
+        }
+
+
+        for keyword in FORBIDDEN_KEYWORDS.iter() {
+            let pattern = format!(r"\b{}\b", regex::escape(keyword));
+            if let Ok(regex) = Regex::new(&pattern) {
+                if regex.is_match(&code_without_comments) {
+                    let message = format!(
+                        "Forbidden TypeScript keyword '{}' found in NullScript file '{}'.\n❌ TypeScript syntax is not allowed in NullScript files.",
+                        keyword, file_name
+                    );
+                    let location = Location::new(
+                        file_path.map(|p| p.to_path_buf()),
+                        Some(1),
+                        None,
+                    );
+                    return Err(NullScriptError::Syntax(
+                        NullScriptSyntaxError::with_location(message, location)
+                    ));
+                }
+            }
+        }
+
+        for pattern in INVALID_SYNTAX.iter() {
+
+            if pattern.contains(' ') || pattern.contains(':') || pattern.contains('<') || pattern.contains('>') {
+                if code_without_comments.contains(pattern) {
+                    let message = format!(
+                        "Invalid TypeScript syntax '{}' found in NullScript file '{}'.\n❌ TypeScript syntax is not allowed in NullScript files.",
+                        pattern, file_name
+                    );
+                    let location = Location::new(
+                        file_path.map(|p| p.to_path_buf()),
+                        Some(1),
+                        None,
+                    );
+                    return Err(NullScriptError::Syntax(
+                        NullScriptSyntaxError::with_location(message, location)
+                    ));
+                }
+            } else {
+
+                let word_pattern = format!(r"\b{}\b", regex::escape(pattern));
+                if let Ok(regex) = Regex::new(&word_pattern) {
+                    if regex.is_match(&code_without_comments) {
+                        let message = format!(
+                            "Invalid TypeScript syntax '{}' found in NullScript file '{}'.\n❌ TypeScript syntax is not allowed in NullScript files.",
+                            pattern, file_name
+                        );
+                        let location = Location::new(
+                            file_path.map(|p| p.to_path_buf()),
+                            Some(1),
+                            None,
+                        );
+                        return Err(NullScriptError::Syntax(
+                            NullScriptSyntaxError::with_location(message, location)
+                        ));
+                    }
+                }
+            }
+        }
+
+
+        let type_annotation_patterns = [
+            r":\s*[A-Za-z_$][\w$<>|[\]\s]*\s*[=,)]",
+            r"\)\s*:\s*[A-Za-z_$][\w$<>|[\]\s]*\s*\{",
+            r"run\s+[a-zA-Z_$][\w$]*\s*\([^)]*\)\s*:\s*[A-Za-z_$][\w$<>|[\]\s]*",
+        ];
+
+        for pattern in type_annotation_patterns.iter() {
+            if let Ok(regex) = Regex::new(pattern) {
+                if regex.is_match(source) {
+                    let message = format!(
+                        "TypeScript type annotations found in NullScript file '{}'.\n❌ TypeScript syntax is not allowed in NullScript files.",
+                        file_name
+                    );
+                    let location = Location::new(
+                        file_path.map(|p| p.to_path_buf()),
+                        Some(1),
+                        None,
+                    );
+                    return Err(NullScriptError::Syntax(
+                        NullScriptSyntaxError::with_location(message, location)
+                    ));
+                }
+            }
+        }
+
+
+        let lines: Vec<&str> = source.split('\n').collect();
         for (i, line) in lines.iter().enumerate() {
             let line = line.trim();
             let line_number = i as u32 + 1;
@@ -35,32 +139,26 @@ impl NullScriptTranspiler {
                 continue;
             }
 
+
             let invalid_patterns = vec![
-                (r"\b(function\s+\w+\s*\()", "using 'function' instead of 'feels'"),
-                (r"\b(const\s+\w+)", "using 'const' instead of 'definitely'"),
-                (r"\b(let\s+\w+)", "using 'let' instead of 'maybe'"),
-                (r"\b(var\s+\w+)", "using 'var' instead of 'mayhap'"),
-                (r"\b(if\s*\()", "using 'if' instead of 'checkthis'"),
-                (r"\b(else\s+)", "using 'else' instead of 'orelse'"),
-                (r"\b(return\s+)", "using 'return' instead of 'pls'"),
-                (r"\b(true)\b", "using 'true' instead of 'fr'"),
-                (r"\b(false)\b", "using 'false' instead of 'cap'"),
-                (r"\b(null)\b", "using 'null' instead of 'nocap'"),
-                (r"\b(undefined)\b", "using 'undefined' instead of 'ghost'"),
-                (r"\b(interface\s+\w+)", "using 'interface' instead of 'vibes'"),
-                (r"\b(type\s+\w+)", "using 'type' instead of 'vibe'"),
-                (r"\b(class\s+\w+)", "using 'class' instead of 'bigbrain'"),
-                (r"\b(try\s*\{)", "using 'try' instead of 'oops' or 'oop'"),
-                (r"\b(catch\s*\()", "using 'catch' instead of 'mybad'"),
-                (r"\b(finally\s*\{)", "using 'finally' instead of 'anyway'"),
+                (r"^\s*(function\s+\w+\s*\()", "using 'function' instead of 'run'"),
+                (r"^\s*(const\s+\w+)", "using 'const' instead of 'fixed'"),
+                (r"^\s*(if\s*\()", "using 'if' instead of 'whatever'"),
+                (r"^\s*(else\s+)", "using 'else' instead of 'otherwise'"),
+                (r"^\s*(true)\b", "using 'true' instead of 'yes'"),
+                (r"^\s*(false)\b", "using 'false' instead of 'no'"),
+                (r"^\s*(class\s+\w+)", "using 'class' instead of 'model'"),
+                (r"^\s*(try\s*\{)", "using 'try' instead of 'test'"),
+                (r"^\s*(catch\s*\()", "using 'catch' instead of 'grab'"),
+                (r"^\s*(finally\s*\{)", "using 'finally' instead of 'atLast'"),
             ];
 
-            for (pattern, _description) in invalid_patterns {
+            for (pattern, description) in invalid_patterns {
                 let regex = Regex::new(pattern)?;
                 if regex.is_match(line) {
                     let message = format!(
-                        "Invalid syntax on line {}: You're using standard TypeScript/JavaScript syntax instead of NullScript keywords.\n💡 Run 'nsc keywords' to see the correct NullScript syntax.",
-                        line_number
+                        "Invalid syntax on line {}: {}\n💡 Use NullScript keywords instead of standard JavaScript/TypeScript syntax.",
+                        line_number, description
                     );
                     let location = Location::new(
                         file_path.map(|p| p.to_path_buf()),
@@ -72,22 +170,32 @@ impl NullScriptTranspiler {
                     ));
                 }
             }
+        }
 
-            if RegexUtils::matches(r"^(\w+)\s+\w+\s*=", line) {
-                if let Some(captures) = Regex::new(r"^(\w+)\s+\w+\s*=").ok().and_then(|re| re.captures(line)) {
-                    if let Some(keyword_match) = captures.get(1) {
-                        let keyword = keyword_match.as_str();
-                        let all_keywords = self.keywords.get_all_keywords();
-                        let valid_keywords = ["export", "import", "from", "as"];
 
-                        if !all_keywords.contains_key(keyword) && !valid_keywords.contains(&keyword) {
+        let nullscript_keywords: Vec<&str> = KEYWORDS.iter().map(|(keyword, _)| *keyword).collect();
+
+
+        let identifier_patterns = vec![
+            (r"^\s*(let|fixed|var)\s+([a-zA-Z_$][\w$]*)\s*=", "variable declaration", 2),
+            (r"^\s*run\s+([a-zA-Z_$][\w$]*)\s*\(", "function declaration", 1),
+            (r"^\s*model\s+([a-zA-Z_$][\w$]*)\s*\{", "class declaration", 1),
+            (r"^\s+run\s+([a-zA-Z_$][\w$]*)\s*\(", "method declaration", 1),
+        ];
+
+        for (pattern, description, capture_group) in identifier_patterns {
+            if let Ok(regex) = Regex::new(pattern) {
+                for cap in regex.captures_iter(source) {
+                    if let Some(identifier) = cap.get(capture_group) {
+                        let clean_id = identifier.as_str().trim();
+                        if nullscript_keywords.contains(&clean_id) {
                             let message = format!(
-                                "Unknown keyword '{}' on line {}.\n💡 Use valid NullScript keywords. Run 'nsc keywords' to see all available options.",
-                                keyword, line_number
+                                "Cannot use NullScript keyword '{}' as {}.\n💡 Choose a different name for your {}.",
+                                clean_id, description, description
                             );
                             let location = Location::new(
                                 file_path.map(|p| p.to_path_buf()),
-                                Some(line_number),
+                                Some(1),
                                 None,
                             );
                             return Err(NullScriptError::Syntax(
@@ -99,227 +207,209 @@ impl NullScriptTranspiler {
             }
         }
 
+
+        let param_pattern = Regex::new(r"run\s+[a-zA-Z_$][\w$]*\s*\(([^)]*)\)")?;
+        for cap in param_pattern.captures_iter(source) {
+            if let Some(params_str) = cap.get(1) {
+                let params = params_str.as_str().split(',').map(|p| p.trim()).collect::<Vec<_>>();
+                for param in params {
+                    if !param.is_empty() && nullscript_keywords.contains(&param) {
+                        let message = format!(
+                            "Cannot use NullScript keyword '{}' as function parameter.\n💡 Choose a different name for your function parameter.",
+                            param
+                        );
+                        let location = Location::new(
+                            file_path.map(|p| p.to_path_buf()),
+                            Some(1),
+                            None,
+                        );
+                        return Err(NullScriptError::Syntax(
+                            NullScriptSyntaxError::with_location(message, location)
+                        ));
+                    }
+                }
+            }
+        }
+
         Ok(())
     }
 
-    pub fn transpile(&self, source: &str, _options: &TranspileOptions) -> Result<String, NullScriptError> {
+    pub fn transpile(&self, source: &str) -> Result<String, NullScriptError> {
         let mut output = source.to_string();
 
-        for (alias, ts_keyword) in self.keywords.get_function_keywords() {
-            if alias.contains("async") {
-                let regex = Regex::new(&format!(r"\b{}\s+([a-zA-Z_$][\w$]*)", regex::escape(alias)))?;
-                output = regex.replace_all(&output, format!("{} $1", ts_keyword)).to_string();
-            } else {
-                let regex = Regex::new(&format!(
-                    r"\b{}\s+([a-zA-Z_$][\w$]*)\s*(?:<[^>]*>)?\s*\(",
-                    regex::escape(alias)
-                ))?;
 
-                output = regex.replace_all(&output, |caps: &regex::Captures| {
-                    let _function_name = &caps[1];
-                    let lines: Vec<&str> = output.split('\n').collect();
-                    let match_pos = caps.get(0).unwrap().start();
-                    let current_line_index = output[..match_pos].matches('\n').count();
+        let class_decl_regex = Regex::new(r"model\s+([a-zA-Z_$][\w$]*)\s*\{")?;
+        output = class_decl_regex.replace_all(&output, "class $1 {").to_string();
 
-                    if current_line_index < lines.len() {
-                        let current_line = lines[current_line_index];
-                        let indent = current_line.chars()
-                            .take_while(|&c| c.is_whitespace())
-                            .collect::<String>();
 
-                        if !indent.is_empty() {
-                            caps[0].replace(alias, "").trim_start().to_string()
-                        } else {
-                            format!("{} {}", ts_keyword, caps[0].replace(alias, "").trim_start())
-                        }
-                    } else {
-                        format!("{} {}", ts_keyword, caps[0].replace(alias, "").trim_start())
-                    }
-                }).to_string();
+        let class_field_decl_pattern = Regex::new(r"(\s{4,})fixed\s+([a-zA-Z_$][\w$]*)\s*;")?;
+        output = class_field_decl_pattern.replace_all(&output, "").to_string();
 
-                let anon_regex = Regex::new(&format!(r"\b{}\s*\(", regex::escape(alias)))?;
-                output = anon_regex.replace_all(&output, format!("{}(", ts_keyword)).to_string();
-            }
-        }
 
-        let all_keywords = self.keywords.get_all_keywords();
-        for (alias, ts_keyword) in all_keywords {
-            if alias == "feels" || alias == "feels async" {
+        let class_field_pattern = Regex::new(r"(\s{4,})fixed\s+([a-zA-Z_$][\w$]*)\s*=\s*([^;]+);")?;
+        output = class_field_pattern.replace_all(&output, "").to_string();
+
+
+
+
+        let static_regex = Regex::new(r"\brun\s+forever\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = static_regex.replace_all(&output, "static $1($2) {").to_string();
+
+
+        let async_top_regex = Regex::new(r"(?m)^\s*run\s+later\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = async_top_regex.replace_all(&output, "async function $1($2) {").to_string();
+
+
+        let function_declaration_regex = Regex::new(r"run\s+([a-zA-Z_$][\w$]*)\s*\(\s*\)\s*\{")?;
+        output = function_declaration_regex.replace_all(&output, "function $1() {").to_string();
+
+
+        let function_declaration_params_regex = Regex::new(r"run\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = function_declaration_params_regex.replace_all(&output, "function $1($2) {").to_string();
+
+
+        let nested_function_regex = Regex::new(r"(\s*)run\s+([a-zA-Z_$][\w$]*)\s*\(\s*\)\s*\{")?;
+        output = nested_function_regex.replace_all(&output, "$1function $2() {").to_string();
+
+
+        let nested_function_params_regex = Regex::new(r"(\s*)run\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = nested_function_params_regex.replace_all(&output, "$1function $2($3) {").to_string();
+
+
+        let class_method_post_regex = Regex::new(r"(\s{4,})function\s+([a-zA-Z_$][\w$]*)\s*\(\s*\)\s*\{")?;
+        output = class_method_post_regex.replace_all(&output, "$1$2() {").to_string();
+
+
+        let class_method_params_post_regex = Regex::new(r"(\s{4,})function\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = class_method_params_post_regex.replace_all(&output, "$1$2($3) {").to_string();
+
+
+        let constructor_regex = Regex::new(r"(\s{4,})function\s+__init__\s*\(([^)]*)\)\s*\{")?;
+        output = constructor_regex.replace_all(&output, "$1constructor($2) {").to_string();
+
+
+        let constructor_run_regex = Regex::new(r"(\s{4,})run\s+__init__\s*\(([^)]*)\)\s*\{")?;
+        output = constructor_run_regex.replace_all(&output, "$1constructor($2) {").to_string();
+
+
+        let async_method_regex = Regex::new(r"(\s{4,})async\s+function\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = async_method_regex.replace_all(&output, "$1async $2($3) {").to_string();
+
+
+        let async_method_fix_regex = Regex::new(r"(\s{4,})function\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{(\s*await)")?;
+        output = async_method_fix_regex.replace_all(&output, "$1async $2($3) {$4").to_string();
+
+
+        let class_async_regex = Regex::new(r"(\s{4,})function\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{(\s*let\s+response\s*=\s*await)")?;
+        output = class_async_regex.replace_all(&output, "$1async $2($3) {$4").to_string();
+
+
+        let standalone_async_regex = Regex::new(r"(?m)\brun\s+async\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = standalone_async_regex.replace_all(&output, "async function $1($2) {").to_string();
+
+
+        let class_run_async_regex = Regex::new(r"(?m)(\s{4,})run\s+async\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = class_run_async_regex.replace_all(&output, "$1async $2($3) {").to_string();
+
+
+
+
+        let remove_regex = Regex::new(r"\bremove\s+([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*(?:\[[^\]]+\])?)\b")?;
+        output = remove_regex.replace_all(&output, "delete $1").to_string();
+
+        for (nullscript_keyword, js_keyword) in KEYWORDS.iter() {
+
+            if *nullscript_keyword == "run" || *nullscript_keyword == "remove" {
                 continue;
             }
 
-            if alias == "remove" {
-                let regex = Regex::new(r"\bremove\s+([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*(?:\[[^\]]+\])?)\b")?;
-                output = regex.replace_all(&output, "delete $1").to_string();
-            } else {
-                let regex = Regex::new(&format!(r"\b{}\b", regex::escape(&alias)))?;
-                output = regex.replace_all(&output, ts_keyword.as_str()).to_string();
-            }
+            let pattern = format!(r"\b{}\b", regex::escape(nullscript_keyword));
+            let regex = Regex::new(&pattern)?;
+            output = regex.replace_all(&output, *js_keyword).to_string();
         }
 
-        for (alias, ts_keyword) in self.keywords.get_multi_word_keywords() {
-            let regex = Regex::new(&format!(r"\b{}\s+", regex::escape(alias)))?;
-            output = regex.replace_all(&output, format!("{} ", ts_keyword)).to_string();
-        }
+
+        let default_export_regex = Regex::new(r"\bshare\s+default\s+run\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*\{")?;
+        output = default_export_regex.replace_all(&output, "export default function $1($2) {").to_string();
+
+
+        let object_function_regex = Regex::new(r"(\w+)\s*:\s*run\s*\(")?;
+        output = object_function_regex.replace_all(&output, "$1: function(").to_string();
+
+
+        let arrow_function_regex = Regex::new(r"run\s*\(([^)]*)\)\s*\{")?;
+        output = arrow_function_regex.replace_all(&output, "function($1) {").to_string();
+
+
+        let non_null_regex = Regex::new(r"([a-zA-Z_$][\w$]*)\!")?;
+        output = non_null_regex.replace_all(&output, "$1").to_string();
+
+
+        let super_constructor_regex = Regex::new(r"super\.constructor\(")?;
+        output = super_constructor_regex.replace_all(&output, "super(").to_string();
+
+
+        let json_method_regex = Regex::new(r"\.JSON\(")?;
+        output = json_method_regex.replace_all(&output, ".json(").to_string();
+
+
+        let static_method_call_regex = Regex::new(r"([a-zA-Z_$][\w$]*)\.forever\.([a-zA-Z_$][\w$]*)\(")?;
+        output = static_method_call_regex.replace_all(&output, "$1.$2(").to_string();
+
+
+        let static_call_regex = Regex::new(r"([a-zA-Z_$][\w$]*)\.static\.([a-zA-Z_$][\w$]*)\(")?;
+        output = static_call_regex.replace_all(&output, "$1.$2(").to_string();
+
+
+        let default_import_regex = Regex::new(r"\bimport\s+default\s+as\s+([a-zA-Z_$][\w$]*)")?;
+        output = default_import_regex.replace_all(&output, "import $1").to_string();
+
+
+
+
 
         Ok(output)
-    }
-
-    pub async fn transpile_file(
-        &self,
-        input_path: &Path,
-        output_path: &Path,
-        options: &TranspileOptions,
-    ) -> Result<String, NullScriptError> {
-        let source = fs::read_to_string(input_path).await?;
-
-        self.validate_syntax(&source, Some(input_path))?;
-
-        let transpiled = self.transpile(&source, options)?;
-
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent).await?;
-        }
-
-        fs::write(output_path, &transpiled).await?;
-
-        Ok(transpiled)
     }
 
     pub async fn transpile_to_js(
         &self,
         ns_path: &Path,
         js_path: &Path,
-        options: &TranspileOptions,
     ) -> Result<(), NullScriptError> {
-        let temp_dir = std::env::temp_dir().join("nullscript-temp");
-        fs::create_dir_all(&temp_dir).await?;
+        let source = fs::read_to_string(ns_path).await?;
 
-        let ts_filename = ns_path.file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("temp")
-            .to_string() + ".ts";
+        self.validate_syntax(&source, Some(ns_path))?;
 
-        let temp_ts_path = temp_dir.join(&ts_filename);
+        let transpiled = self.transpile(&source)?;
 
-        let ts_options = TranspileOptions {
-            output_format: OutputFormat::TypeScript,
-            ..options.clone()
-        };
-
-        match self.transpile_file(ns_path, &temp_ts_path, &ts_options).await {
-            Ok(_) => {},
-            Err(e) => {
-                let _ = fs::remove_dir_all(&temp_dir).await;
-                return Err(e);
-            }
+        if let Some(parent) = js_path.parent() {
+            fs::create_dir_all(parent).await?;
         }
 
-        let tsconfig_path = temp_dir.join("tsconfig.json");
-        let js_filename = ns_path.file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("temp")
-            .to_string() + ".js";
-        let temp_js_path = temp_dir.join(&js_filename);
+        fs::write(js_path, &transpiled).await?;
 
-        let tsconfig = serde_json::json!({
-            "compilerOptions": {
-                "target": "ES2022",
-                "module": "ES2022",
-                "moduleResolution": "node",
-                "outDir": ".",
-                "esModuleInterop": true,
-                "allowSyntheticDefaultImports": true,
-                "skipLibCheck": true,
-                "noEmit": false,
-            },
-            "include": [ts_filename]
-        });
-
-        fs::write(&tsconfig_path, serde_json::to_string_pretty(&tsconfig)?).await?;
-
-        let tsc_args = if options.skip_type_check {
-            vec!["--noCheck", "--project", "tsconfig.json"]
-        } else {
-            vec!["--project", "tsconfig.json"]
-        };
-
-        let tsc_output = CommandUtils::execute_tsc_in_dir(&tsc_args, &temp_dir);
-
-        let result = match tsc_output {
-            Ok(output) => {
-                if !output.status.success() {
-                    let error_output = String::from_utf8_lossy(&output.stdout);
-                    let stderr_output = String::from_utf8_lossy(&output.stderr);
-
-                    let combined_error = if !error_output.is_empty() {
-                        error_output.to_string()
-                    } else if !stderr_output.is_empty() {
-                        stderr_output.to_string()
-                    } else {
-                        "TypeScript compilation failed".to_string()
-                    };
-
-                    Err(parse_typescript_error(&combined_error, Some(ns_path.to_path_buf())))
-                } else {
-                    match fs::metadata(&temp_js_path).await {
-                        Ok(_) => {
-                            if let Some(parent) = js_path.parent() {
-                                fs::create_dir_all(parent).await?;
-                            }
-                            fs::copy(&temp_js_path, js_path).await?;
-                            Ok(())
-                        }
-                        Err(_) => {
-                            let location = Location::new(Some(ns_path.to_path_buf()), None, None);
-                            Err(NullScriptError::Transpile(NullScriptTranspileError::with_location(
-                                "JavaScript file was not generated by TypeScript compiler".to_string(),
-                                location,
-                            )))
-                        }
-                    }
-                }
-            }
-            Err(e) => Err(NullScriptError::Io(e)),
-        };
-
-        let _ = fs::remove_dir_all(&temp_dir).await;
-
-        result
+        Ok(())
     }
 
     pub async fn build_directory(
         &self,
         input_dir: &Path,
         output_dir: &Path,
-        options: &TranspileOptions,
     ) -> Result<Vec<PathBuf>, NullScriptError> {
         let mut outputs = Vec::new();
 
         for entry in WalkDir::new(input_dir)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "ns"))
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "ns"))
         {
             let ns_file = entry.path();
             let relative_path = ns_file.strip_prefix(input_dir)
                 .map_err(|e| NullScriptError::Io(std::io::Error::new(std::io::ErrorKind::InvalidInput, e)))?;
 
-            let output_ext = match options.output_format {
-                OutputFormat::JavaScript => "js",
-                OutputFormat::TypeScript => "ts",
-            };
+            let output_path = output_dir.join(relative_path.with_extension("js"));
 
-            let output_path = output_dir.join(relative_path.with_extension(output_ext));
-
-            match options.output_format {
-                OutputFormat::JavaScript => {
-                    self.transpile_to_js(ns_file, &output_path, options).await?;
-                }
-                OutputFormat::TypeScript => {
-                    self.transpile_file(ns_file, &output_path, options).await?;
-                }
-            }
+            self.transpile_to_js(ns_file, &output_path).await?;
 
             outputs.push(output_path);
         }
@@ -337,14 +427,14 @@ mod tests {
     async fn test_basic_transpilation() {
         let transpiler = NullScriptTranspiler::new();
         let source = r#"
-definitely message = "Hello, World!";
-maybe count = 0;
-checkthis (count is 0) {
+fixed message = "Hello, World!";
+let count = 0;
+whatever (count is 0) {
     console.log(message);
 }
 "#;
 
-        let result = transpiler.transpile(source, &TranspileOptions::default()).unwrap();
+        let result = transpiler.transpile(source).unwrap();
 
         assert!(result.contains("const message"));
         assert!(result.contains("let count"));
@@ -355,12 +445,12 @@ checkthis (count is 0) {
     async fn test_function_transpilation() {
         let transpiler = NullScriptTranspiler::new();
         let source = r#"
-feels greet(name: string): string {
-    pls `Hello, ${name}!`;
+run greet(name: string): string {
+    result `Hello, ${name}!`;
 }
 "#;
 
-        let result = transpiler.transpile(source, &TranspileOptions::default()).unwrap();
+        let result = transpiler.transpile(source).unwrap();
 
         assert!(result.contains("function greet"));
         assert!(result.contains("return `Hello"));
