@@ -42,6 +42,7 @@ examples/
 examples-output/
 examples-output-js/
 test-output/
+public/
 
 # Documentation source
 docs/
@@ -83,3 +84,6 @@ coverage/
 # Rust build artifacts
 target/
 **/*.rs.bk
+
+# Config files
+ns.config.json

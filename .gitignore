@@ -76,3 +76,9 @@ yarn.lock
 pnpm-lock.yaml
 bun.lockb
 bun.lock
+
+# Changelog
+CHANGELOG.md
+
+# NullScript specific
+reports/

@@ -1,12 +1,12 @@
 [package]
 name = "nullscript"
-version = "2.0.3"
+version = "2.1.0"
 edition = "2021"
 description = "NullScript: TypeScript with attitude - a fun parody language that compiles to identical TypeScript/JavaScript"
 authors = ["NullScript Language Team"]
 license = "MIT"
 repository = "https://github.com/nullscript-lang/nullscript"
-homepage = "https://github.com/nullscript-lang/nullscript#readme"
+homepage = "https://nullscript.js.org"
 
 [[bin]]
 name = "nsc"
@@ -28,4 +28,9 @@ walkdir = "2.4"
 anyhow = "1.0"
 thiserror = "1.0"
 colored = "2.1"
-tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "fs"] }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "fs", "time"] }
+notify = "6.1"
+crossbeam-channel = "0.5"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = "0.4"
+num_cpus = "1.16"

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::fs;
-use crate::core::NullScriptError;
+use crate::errors::types::NullScriptError;
 
 pub struct FileUtils;
 

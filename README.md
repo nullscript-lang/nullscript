@@ -1,6 +1,37 @@
-# NullScript 🎭
+<div align="center">
+  <img src="public/logo.png" alt="NullScript Logo" width="128" height="128">
+  <h1 align="center">
+    <a href="https://github.com/nullscript-lang/nullscript">NullScript</a>
+  </h1>
 
-**JavaScript with Attitude** - A fun parody programming language that transpiles to JavaScript.
+  <p align="center">
+    <strong>JavaScript with Attitude</strong> - A fun parody programming language that transpiles to clean JavaScript
+  </p>
+
+  <p align="center">
+    <a href="https://github.com/nullscript-lang/nullscript/releases">
+      <img src="https://img.shields.io/github/v/release/nullscript-lang/nullscript?style=flat-square" alt="Latest Release">
+    </a>
+    <a href="https://github.com/nullscript-lang/nullscript/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/nullscript-lang/nullscript?style=flat-square" alt="License">
+    </a>
+    <a href="https://npmjs.com/package/nullscript">
+      <img src="https://img.shields.io/npm/v/nullscript?style=flat-square" alt="NPM Version">
+    </a>
+  </p>
+
+  <p align="center">
+    <a href="https://nullscript.js.org">📚 Documentation</a>
+    ·
+    <a href="https://nullscript.js.org/examples/basic.html">💡 Examples</a>
+    ·
+    <a href="https://nullscript.js.org/reference/keywords.html">🔤 Keywords</a>
+    ·
+    <a href="https://github.com/nullscript-lang/nullscript/issues">🐛 Report Bug</a>
+    ·
+    <a href="https://github.com/nullscript-lang/nullscript/discussions">💬 Discuss</a>
+  </p>
+</div>
 
 ## ✨ Features
 
@@ -85,4 +116,4 @@ speak.say(greeter.greet(person));
 
 **📖 [Visit the full documentation](https://nullscript.js.org) for complete language reference, examples, and tutorials.**
 
-*"NullScript: Because programming should be fun, even when it's serious."* 🎭
+*"NullScript: Because programming should be fun, even when it's serious."*

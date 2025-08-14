@@ -1,7 +1,11 @@
 mod cli;
-mod core;
+mod language;
+mod config;
+mod analysis;
+mod development;
+mod errors;
+mod common;
 mod compiler;
-mod utils;
 
 use cli::run;
 use std::env;

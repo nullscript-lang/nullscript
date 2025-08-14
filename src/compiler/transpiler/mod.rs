@@ -1,6 +1,7 @@
-use crate::core::{NullScriptError, NullScriptSyntaxError};
-use crate::core::keywords::{KEYWORDS, FORBIDDEN_KEYWORDS, INVALID_SYNTAX};
-use crate::core::types::{Location, WithLocation};
+
+use crate::errors::types::{NullScriptError, NullScriptSyntaxError};
+use crate::language::keywords::{KEYWORDS, FORBIDDEN_KEYWORDS, INVALID_SYNTAX};
+use crate::language::types::{Location, WithLocation};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use tokio::fs;

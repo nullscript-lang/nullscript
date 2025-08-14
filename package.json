@@ -1,6 +1,6 @@
 {
   "name": "nullscript",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "NullScript: JavaScript with attitude - a fun parody language that compiles to JavaScript",
   "bin": {
     "nsc": "target/release/nsc",
@@ -10,8 +10,8 @@
     "start": "./target/release/nsc",
     "build": "source $HOME/.cargo/env && cargo build --release",
     "prepublishOnly": "npm run build",
-    "version:check": "./scripts/version.sh",
-    "version:update": "./scripts/npm-version.sh"
+    "version:check": "chmod +x ./scripts/version.sh && ./scripts/version.sh",
+    "version:update": "chmod +x ./scripts/npm-version.sh && ./scripts/npm-version.sh"
   },
   "keywords": [
     "javascript",
@@ -29,6 +29,5 @@
     "type": "git",
     "url": "https://github.com/nullscript-lang/nullscript.git"
   },
-  "homepage": "https://nullscript.js.org",
-  "dependencies": {}
+  "homepage": "https://nullscript.js.org"
 }

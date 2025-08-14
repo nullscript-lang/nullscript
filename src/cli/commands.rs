@@ -1,4 +1,5 @@
-use crate::core::{NullScriptError, format_error};
+use crate::errors::types::NullScriptError;
+use crate::errors::formatting::ErrorFormatter;
 use crate::cli::handler::CliHandler;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use colored::Colorize;
@@ -11,14 +12,34 @@ use std::process::Command;
     version = None,
     about = "NullScript transpiler - JavaScript with attitude",
     long_about = None,
-    after_help = "Examples:
+    after_help = "Command Groups:
+
+📦 BUILD & RUN:
   nsc build src/                    # Transpile all .ns files in src/ to JavaScript
-  nsc run hello.ns                  # Run a NullScript file
-  nsc keywords                      # Show all available keywords
-  nsc system --info                 # Show system information
+  nsc run hello.ns                  # Run a NullScript file directly
+  nsc convert app.js                # Convert JavaScript to NullScript
+
+🔧 PROJECT MANAGEMENT:
+  nsc init my-project               # Initialize a new NullScript project
+  nsc config --generate             # Generate default configuration file
+  nsc config --show                 # Show current configuration
+
+💻 DEVELOPMENT:
+  nsc dev src/ --watch              # Watch files and rebuild on changes
+  nsc complete src/app.ns --line 10 --column 5  # Get code completion
+  nsc debug app.ns --breakpoint 15  # Debug with breakpoint
+
+📊 ANALYSIS & INFO:
+  nsc analyze src/                  # Analyze project performance
+  nsc analyze-clean                 # Remove all analysis reports
+  nsc analytics .                   # Show project analytics
   nsc info src/ --detailed          # Show detailed file information
 
-Learn more at: https://github.com/nullscript-lang/nullscript"
+🎛️ UTILITIES:
+  nsc keywords                      # Show all available keywords
+  nsc system --info                 # Show system information
+
+Learn more at: https://nullscript.js.org"
 )]
 pub struct Cli {
     #[arg(short = 'v', long = "version", help = "Print Version")]
@@ -35,6 +56,15 @@ pub enum Commands {
     Keywords(KeywordsArgs),
     System(SystemArgs),
     Info(InfoArgs),
+    Config(ConfigArgs),
+    Init(InitArgs),
+    Complete(CompleteArgs),
+    Dev(DevArgs),
+    Analyze(AnalyzeArgs),
+    AnalyzeClean(AnalyzeCleanArgs),
+    Debug(DebugArgs),
+    Convert(ConvertArgs),
+    Analytics(AnalyticsArgs),
 }
 
 #[derive(Args)]
@@ -72,6 +102,123 @@ pub struct InfoArgs {
     pub detailed: bool,
 }
 
+#[derive(Args)]
+pub struct ConfigArgs {
+    #[arg(short = 's', long = "show", help = "Show current configuration")]
+    pub show: bool,
+
+    #[arg(short = 'g', long = "generate", help = "Generate default configuration file")]
+    pub generate: bool,
+
+    #[arg(short = 'v', long = "validate", help = "Validate configuration file")]
+    pub validate: bool,
+}
+
+#[derive(Args)]
+pub struct InitArgs {
+    #[arg(help = "Project name")]
+    pub name: Option<String>,
+
+    #[arg(short = 't', long = "template", help = "Project template")]
+    pub template: Option<String>,
+
+    #[arg(long = "force", help = "Force initialization in non-empty directory")]
+    pub force: bool,
+}
+
+#[derive(Args)]
+pub struct CompleteArgs {
+    #[arg(help = "File path")]
+    pub file: PathBuf,
+
+    #[arg(short = 'l', long = "line", help = "Line number (1-based)")]
+    pub line: u32,
+
+    #[arg(short = 'c', long = "column", help = "Column number (1-based)")]
+    pub column: u32,
+
+    #[arg(long = "format", default_value = "json", help = "Output format (json, text)")]
+    pub format: String,
+}
+
+#[derive(Args)]
+pub struct DevArgs {
+    #[arg(help = "Directory to watch", default_value = "src")]
+    pub path: PathBuf,
+
+    #[arg(short = 'w', long = "watch", help = "Watch files and run on changes")]
+    pub watch: bool,
+
+    #[arg(long = "run-on-save", help = "Execute the file when it changes")]
+    pub run_on_save: bool,
+}
+
+#[derive(Args)]
+pub struct AnalyzeArgs {
+    #[arg(help = "Input directory to analyze", default_value = "src")]
+    pub path: PathBuf,
+
+    #[arg(short = 'o', long = "output", help = "Output directory for reports", default_value = "reports")]
+    pub output: PathBuf,
+
+    #[arg(long = "format", help = "Report format", default_value = "html")]
+    pub format: String,
+
+    #[arg(long = "bundle-size-limit", help = "Bundle size limit in bytes")]
+    pub bundle_size_limit: Option<u64>,
+
+    #[arg(long = "build-time-budget", help = "Build time budget in milliseconds")]
+    pub build_time_budget: Option<u32>,
+}
+
+#[derive(Args)]
+pub struct DebugArgs {
+    #[arg(help = "NullScript file to debug")]
+    pub file: PathBuf,
+
+    #[arg(long = "breakpoint", help = "Set initial breakpoint at line")]
+    pub breakpoint: Option<u32>,
+
+    #[arg(long = "profile", help = "Enable performance profiling")]
+    pub profile: bool,
+}
+
+#[derive(Args)]
+pub struct ConvertArgs {
+    #[arg(help = "JavaScript file to convert to NullScript")]
+    pub file: PathBuf,
+
+    #[arg(short = 'o', long = "output", help = "Output file path")]
+    pub output: Option<PathBuf>,
+
+    #[arg(long = "format", help = "Format the output code")]
+    pub format: bool,
+
+    #[arg(long = "report", help = "Show conversion report")]
+    pub report: bool,
+}
+
+#[derive(Args)]
+pub struct AnalyticsArgs {
+    #[arg(help = "Project directory to analyze", default_value = ".")]
+    pub path: PathBuf,
+
+    #[arg(long = "days", help = "Number of days to analyze", default_value = "30")]
+    pub days: u32,
+
+    #[arg(long = "format", help = "Output format", default_value = "text")]
+    pub format: String,
+}
+
+#[derive(Args)]
+pub struct AnalyzeCleanArgs {
+    #[arg(long = "reports-dir", help = "Reports directory to clean", default_value = "reports")]
+    pub reports_dir: PathBuf,
+
+    #[arg(short = 'f', long = "force", help = "Force removal without confirmation")]
+    pub force: bool,
+}
+
 impl CliHandler {
     pub async fn handle_command(&self, command: Commands) -> Result<(), NullScriptError> {
         match command {
@@ -80,6 +227,15 @@ impl CliHandler {
             Commands::Keywords(args) => self.handle_keywords(args.category),
             Commands::System(args) => self.handle_system(args),
             Commands::Info(args) => self.handle_info(args),
+            Commands::Config(args) => self.handle_config(args),
+            Commands::Init(args) => self.handle_init(args),
+            Commands::Complete(args) => self.handle_complete(args),
+            Commands::Dev(args) => self.handle_dev(args).await,
+            Commands::Analyze(args) => self.handle_analyze(args).await,
+            Commands::AnalyzeClean(args) => self.handle_analyze_clean(args).await,
+            Commands::Debug(args) => self.handle_debug(args).await,
+            Commands::Convert(args) => self.handle_convert(args).await,
+            Commands::Analytics(args) => self.handle_analytics(args).await,
         }
     }
 }
@@ -96,7 +252,7 @@ pub async fn run() -> Result<(), NullScriptError> {
 
     if let Some(command) = cli.command {
         if let Err(e) = handler.handle_command(command).await {
-            eprintln!("{}", format_error(&e).red());
+            eprintln!("{}", ErrorFormatter::format_error(&e));
             std::process::exit(1);
         }
     } else {
@@ -125,7 +281,7 @@ impl CliHandler {
     }
 
     pub fn handle_info(&self, args: InfoArgs) -> Result<(), NullScriptError> {
-        use crate::utils::files::FileUtils;
+        use crate::common::files::FileUtils;
 
         if !args.path.exists() {
             eprintln!("{}", format!("❌ Path does not exist: {}", args.path.display()).red());
